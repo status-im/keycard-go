@@ -3,8 +3,8 @@ package globalplatform
 import (
 	"testing"
 
-	"github.com/status-im/status-go/smartcard/apdu"
-	"github.com/status-im/status-go/smartcard/hexutils"
+	"github.com/status-im/smartcard-go/apdu"
+	"github.com/status-im/smartcard-go/hexutils"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/status-im/status-go/smartcard/apdu"
-	"github.com/status-im/status-go/smartcard/globalplatform"
+	"github.com/status-im/smartcard-go/apdu"
+	"github.com/status-im/smartcard-go/globalplatform"
 )
 
 var (

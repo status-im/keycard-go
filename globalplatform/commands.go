@@ -1,8 +1,8 @@
 package globalplatform
 
 import (
-	"github.com/status-im/status-go/smartcard/apdu"
-	"github.com/status-im/status-go/smartcard/globalplatform/crypto"
+	"github.com/status-im/smartcard-go/apdu"
+	"github.com/status-im/smartcard-go/globalplatform/crypto"
 )
 
 // Constants used in apdu commands and responses as defined by iso7816 and globalplatform.

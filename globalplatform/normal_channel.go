@@ -1,8 +1,8 @@
 package globalplatform
 
 import (
-	"github.com/status-im/status-go/smartcard/apdu"
-	"github.com/status-im/status-go/smartcard/hexutils"
+	"github.com/status-im/smartcard-go/apdu"
+	"github.com/status-im/smartcard-go/hexutils"
 )
 
 // Transmitter defines an interface with one method to transmit raw commands and receive raw responses.

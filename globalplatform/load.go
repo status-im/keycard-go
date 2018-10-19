@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/status-im/status-go/smartcard/apdu"
+	"github.com/status-im/smartcard-go/apdu"
 )
 
 var internalFiles = []string{

@@ -1,8 +1,8 @@
 package globalplatform
 
 import (
-	"github.com/status-im/status-go/smartcard/apdu"
-	"github.com/status-im/status-go/smartcard/hexutils"
+	"github.com/status-im/smartcard-go/apdu"
+	"github.com/status-im/smartcard-go/hexutils"
 )
 
 // SecureChannel wraps another channel and sends wrapped commands using APDUWrapper.

@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/binary"
 
-	"github.com/status-im/status-go/smartcard/apdu"
-	"github.com/status-im/status-go/smartcard/globalplatform/crypto"
+	"github.com/status-im/smartcard-go/apdu"
+	"github.com/status-im/smartcard-go/globalplatform/crypto"
 )
 
 // APDUWrapper is a wrapper for apdu commands inside a global platform secure channel.

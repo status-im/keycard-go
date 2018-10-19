@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/status-im/status-go/smartcard/apdu"
-	"github.com/status-im/status-go/smartcard/globalplatform/crypto"
+	"github.com/status-im/smartcard-go/apdu"
+	"github.com/status-im/smartcard-go/globalplatform/crypto"
 )
 
 // Session is a struct containing the keys and challenges used in the current communication with a card.
