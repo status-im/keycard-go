@@ -14,8 +14,11 @@ var (
 	cardManagerAID = []byte{0xa0, 0x00, 0x00, 0x01, 0x51, 0x00, 0x00, 0x00}
 	testKey        = []byte{0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f}
 
-	statusPkgAID    = []byte{0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x57, 0x61, 0x6C, 0x6C, 0x65, 0x74}
-	statusAppletAID = []byte{0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x57, 0x61, 0x6C, 0x6C, 0x65, 0x74, 0x41, 0x70, 0x70}
+	pkgAID = []byte{0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x57, 0x61, 0x6C, 0x6C, 0x65, 0x74}
+	// applet and instance aid
+	walletAID       = []byte{0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x57, 0x61, 0x6C, 0x6C, 0x65, 0x74, 0x41, 0x70, 0x70}
+	ndefAppletAID   = []byte{0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x57, 0x61, 0x6C, 0x6C, 0x65, 0x74, 0x4E, 0x46, 0x43}
+	ndefInstanceAID = []byte{0xD2, 0x76, 0x00, 0x00, 0x85, 0x01, 0x01}
 )
 
 // Installer defines a struct with methods to install an applet to a smartcard.
@@ -46,7 +49,7 @@ func (i *Installer) Install(capFile *os.File, overwriteApplet bool) (*Secrets, e
 		return nil, errors.New("applet already installed")
 	}
 
-	err = i.deleteAID(statusAppletAID, statusPkgAID)
+	err = i.deleteAID(ndefInstanceAID, walletAID, pkgAID)
 	if err != nil {
 		return nil, err
 	}
@@ -76,11 +79,11 @@ func (i *Installer) Delete() error {
 		return err
 	}
 
-	return i.deleteAID(statusAppletAID, statusPkgAID)
+	return i.deleteAID(ndefInstanceAID, walletAID, pkgAID)
 }
 
 func (i *Installer) isAppletInstalled() (bool, error) {
-	cmd := globalplatform.NewCommandGetStatus(statusAppletAID, globalplatform.P1GetStatusApplications)
+	cmd := globalplatform.NewCommandGetStatus(walletAID, globalplatform.P1GetStatusApplications)
 	resp, err := i.send("get status", cmd, globalplatform.SwOK, globalplatform.SwReferencedDataNotFound)
 	if err != nil {
 		return false, err
@@ -164,7 +167,7 @@ func (i *Installer) deleteAID(aids ...[]byte) error {
 
 func (i *Installer) installApplet(capFile *os.File) (*Secrets, error) {
 	// install for load
-	preLoad := globalplatform.NewCommandInstallForLoad(statusPkgAID, cardManagerAID)
+	preLoad := globalplatform.NewCommandInstallForLoad(pkgAID, cardManagerAID)
 	_, err := i.send("install for load", preLoad)
 	if err != nil {
 		return nil, err
@@ -193,7 +196,7 @@ func (i *Installer) installApplet(capFile *os.File) (*Secrets, error) {
 	params := []byte(secrets.Puk())
 	params = append(params, secrets.PairingToken()...)
 
-	install := globalplatform.NewCommandInstallForInstall(statusPkgAID, statusAppletAID, statusAppletAID, params)
+	install := globalplatform.NewCommandInstallForInstall(pkgAID, walletAID, walletAID, params)
 	_, err = i.send("install for install", install)
 	if err != nil {
 		return nil, err
