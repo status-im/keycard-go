@@ -54,12 +54,14 @@ func (i *Installer) Install(capFile *os.File, overwriteApplet bool) (*Secrets, e
 		return nil, err
 	}
 
-	secrets, err := i.installApplet(capFile)
+	err = i.installApplets(capFile)
 	if err != nil {
 		return nil, err
 	}
 
-	return secrets, nil
+	secrets, err := NewSecrets()
+
+	return secrets, err
 }
 
 // Info returns if the applet is already installed in the card.
@@ -165,44 +167,38 @@ func (i *Installer) deleteAID(aids ...[]byte) error {
 	return nil
 }
 
-func (i *Installer) installApplet(capFile *os.File) (*Secrets, error) {
+func (i *Installer) installApplets(capFile *os.File) error {
 	// install for load
 	preLoad := globalplatform.NewCommandInstallForLoad(pkgAID, cardManagerAID)
 	_, err := i.send("install for load", preLoad)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// load
 	load, err := globalplatform.NewLoadCommandStream(capFile)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	for load.Next() {
 		cmd := load.GetCommand()
-		_, err = i.send(fmt.Sprintf("load %d of 32", load.Index()), cmd)
+		_, err = i.send(fmt.Sprintf("load %d of 36", load.Index()), cmd)
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 
-	// install for install
-	secrets, err := NewSecrets()
+	installNdef := globalplatform.NewCommandInstallForInstall(pkgAID, ndefAppletAID, ndefInstanceAID, []byte{})
+	_, err = i.send("install for install (ndef)", installNdef)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	params := []byte(secrets.Puk())
-	params = append(params, secrets.PairingToken()...)
+	installWallet := globalplatform.NewCommandInstallForInstall(pkgAID, walletAID, walletAID, []byte{})
+	_, err = i.send("install for install (wallet)", installWallet)
 
-	install := globalplatform.NewCommandInstallForInstall(pkgAID, walletAID, walletAID, params)
-	_, err = i.send("install for install", install)
-	if err != nil {
-		return nil, err
-	}
-
-	return secrets, nil
+	return err
 }
 
 func (i *Installer) send(description string, cmd *apdu.Command, allowedResponses ...uint16) (*apdu.Response, error) {
