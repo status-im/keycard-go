@@ -5,11 +5,11 @@ import (
 	"fmt"
 	stdlog "log"
 	"os"
+	"strings"
 
 	"github.com/ebfe/scard"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/status-im/smartcard-go/lightwallet"
-	"github.com/status-im/status-go/logutils"
 )
 
 type commandFunc func(*lightwallet.Installer) error
@@ -25,12 +25,20 @@ var (
 	flagLogLevel  = flag.String("l", "", `Log level, one of: "ERROR", "WARN", "INFO", "DEBUG", and "TRACE"`)
 )
 
+func initLogger() {
+	level, err := log.LvlFromString(strings.ToLower(*flagLogLevel))
+	if err != nil {
+		stdlog.Fatal(err)
+	}
+
+	handler := log.StreamHandler(os.Stderr, log.TerminalFormat(true))
+	filteredHandler := log.LvlFilterHandler(level, handler)
+	log.Root().SetHandler(filteredHandler)
+}
+
 func init() {
 	flag.Parse()
-
-	if err := logutils.OverrideRootLog(true, *flagLogLevel, "", true); err != nil {
-		stdlog.Fatalf("Error initializing logger: %v", err)
-	}
+	initLogger()
 
 	commands = map[string]commandFunc{
 		"install": commandInstall,
