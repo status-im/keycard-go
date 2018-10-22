@@ -14,10 +14,12 @@ import (
 const (
 	pairingTokenSalt = "Status Hardware Wallet Lite"
 	maxPukNumber     = int64(999999999999)
+	maxPinNumber     = int64(999999)
 )
 
 // Secrets contains the secret data needed to pair a client with a card.
 type Secrets struct {
+	pin          string
 	puk          string
 	pairingPass  string
 	pairingToken []byte
@@ -35,11 +37,22 @@ func NewSecrets() (*Secrets, error) {
 		return nil, err
 	}
 
+	pin, err := rand.Int(rand.Reader, big.NewInt(maxPinNumber))
+	if err != nil {
+		return nil, err
+	}
+
 	return &Secrets{
+		pin:          fmt.Sprintf("%06d", pin.Int64()),
 		puk:          fmt.Sprintf("%012d", puk.Int64()),
 		pairingPass:  pairingPass,
 		pairingToken: generatePairingToken(pairingPass),
 	}, nil
+}
+
+// Pin returns the pin string.
+func (s *Secrets) Pin() string {
+	return s.pin
 }
 
 // Puk returns the puk string.

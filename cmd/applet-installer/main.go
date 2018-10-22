@@ -26,6 +26,10 @@ var (
 )
 
 func initLogger() {
+	if *flagLogLevel == "" {
+		*flagLogLevel = "info"
+	}
+
 	level, err := log.LvlFromString(strings.ToLower(*flagLogLevel))
 	if err != nil {
 		stdlog.Fatal(err)
@@ -44,6 +48,7 @@ func init() {
 		"install": commandInstall,
 		"status":  commandStatus,
 		"delete":  commandDelete,
+		"init":    commandInit,
 	}
 }
 
@@ -144,14 +149,12 @@ func commandInstall(i *lightwallet.Installer) error {
 	}
 	defer f.Close()
 
-	secrets, err := i.Install(f, *flagOverwrite)
+	err = i.Install(f, *flagOverwrite)
 	if err != nil {
 		fail("installation error", "error", err)
 	}
 
-	fmt.Printf("\n\nPUK %s\n", secrets.Puk())
-	fmt.Printf("Pairing password: %s\n", secrets.PairingPass())
-
+	fmt.Printf("applet installed successfully.\n")
 	return nil
 }
 
@@ -177,6 +180,19 @@ func commandDelete(i *lightwallet.Installer) error {
 	}
 
 	fmt.Printf("applet deleted\n")
+
+	return nil
+}
+
+func commandInit(i *lightwallet.Installer) error {
+	secrets, err := i.Init()
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("PIN %s\n", secrets.Pin())
+	fmt.Printf("PUK %s\n", secrets.Puk())
+	fmt.Printf("Pairing password: %s\n", secrets.PairingPass())
 
 	return nil
 }

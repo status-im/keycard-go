@@ -34,34 +34,66 @@ func NewInstaller(t globalplatform.Transmitter) *Installer {
 }
 
 // Install installs the applet from the specified capFile.
-func (i *Installer) Install(capFile *os.File, overwriteApplet bool) (*Secrets, error) {
+func (i *Installer) Install(capFile *os.File, overwriteApplet bool) error {
 	err := i.initSecureChannel(cardManagerAID)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	installed, err := i.isAppletInstalled()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if installed && !overwriteApplet {
-		return nil, errors.New("applet already installed")
+		return errors.New("applet already installed")
 	}
 
 	err = i.deleteAID(ndefInstanceAID, walletAID, pkgAID)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	err = i.installApplets(capFile)
 	if err != nil {
+		return err
+	}
+
+	return err
+}
+
+func (i *Installer) Init() (*Secrets, error) {
+	secrets, err := NewSecrets()
+	if err != nil {
 		return nil, err
 	}
 
-	secrets, err := NewSecrets()
+	sel := globalplatform.NewCommandSelect(walletAID)
+	resp, err := i.send("select applet", sel)
+	if err != nil {
+		return nil, err
+	}
 
-	return secrets, err
+	cardKeyData := resp.Data[2:]
+	secureChannel, err := NewSecureChannel(i.c, cardKeyData)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := secureChannel.OneShotEncrypt(secrets)
+	if err != nil {
+		return nil, err
+	}
+
+	cmd := NewCommandInit(data)
+	resp, err = i.send("init card", cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("RESP: %+v\n", resp)
+
+	return secrets, nil
 }
 
 // Info returns if the applet is already installed in the card.
