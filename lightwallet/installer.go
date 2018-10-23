@@ -74,6 +74,11 @@ func (i *Installer) Init() (*Secrets, error) {
 		return nil, err
 	}
 
+	if resp.Data[0] != tagSelectResponsePreInitialized {
+		err := fmt.Errorf("card already initialized (%x).", resp.Data[0])
+		return nil, err
+	}
+
 	cardKeyData := resp.Data[2:]
 	secureChannel, err := NewSecureChannel(i.c, cardKeyData)
 	if err != nil {
@@ -90,8 +95,6 @@ func (i *Installer) Init() (*Secrets, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Printf("RESP: %+v\n", resp)
 
 	return secrets, nil
 }
