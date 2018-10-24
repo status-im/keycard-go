@@ -8,7 +8,8 @@ import (
 const (
 	InsInit = uint8(0xFE)
 
-	tagSelectResponsePreInitialized = uint8(0x80)
+	TagSelectResponsePreInitialized = uint8(0x80)
+	TagApplicationInfoTemplate      = uint8(0xA4)
 )
 
 func NewCommandInit(data []byte) *apdu.Command {

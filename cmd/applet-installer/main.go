@@ -9,10 +9,10 @@ import (
 
 	"github.com/ebfe/scard"
 	"github.com/ethereum/go-ethereum/log"
-	"github.com/status-im/smartcard-go/lightwallet"
+	"github.com/status-im/smartcard-go/lightwallet/actionsets"
 )
 
-type commandFunc func(*lightwallet.Installer) error
+type commandFunc func(*actionsets.Installer) error
 
 var (
 	logger = log.New("package", "status-go/cmd/hardware-wallet-light")
@@ -123,7 +123,7 @@ func main() {
 		logger.Debug("card protocol", "T", "unknown")
 	}
 
-	i := lightwallet.NewInstaller(card)
+	i := actionsets.NewInstaller(card)
 	if f, ok := commands[*flagCommand]; ok {
 		err = f(i)
 		if err != nil {
@@ -137,7 +137,7 @@ func main() {
 	usage()
 }
 
-func commandInstall(i *lightwallet.Installer) error {
+func commandInstall(i *actionsets.Installer) error {
 	if *flagCapFile == "" {
 		logger.Error("you must specify a cap file path with the -f flag\n")
 		usage()
@@ -158,7 +158,7 @@ func commandInstall(i *lightwallet.Installer) error {
 	return nil
 }
 
-func commandStatus(i *lightwallet.Installer) error {
+func commandStatus(i *actionsets.Installer) error {
 	installed, err := i.Info()
 	if err != nil {
 		return err
@@ -173,7 +173,7 @@ func commandStatus(i *lightwallet.Installer) error {
 	return nil
 }
 
-func commandDelete(i *lightwallet.Installer) error {
+func commandDelete(i *actionsets.Installer) error {
 	err := i.Delete()
 	if err != nil {
 		return err
@@ -184,7 +184,7 @@ func commandDelete(i *lightwallet.Installer) error {
 	return nil
 }
 
-func commandInit(i *lightwallet.Installer) error {
+func commandInit(i *actionsets.Installer) error {
 	secrets, err := i.Init()
 	if err != nil {
 		return err

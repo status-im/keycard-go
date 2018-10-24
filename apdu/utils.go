@@ -18,6 +18,15 @@ func (e *ErrTagNotFound) Error() string {
 
 // FindTag searches for a tag value within a TLV sequence.
 func FindTag(raw []byte, tags ...uint8) ([]byte, error) {
+	return findTag(raw, 0, tags...)
+}
+
+// FindTagN searches for a tag value within a TLV sequence and returns the n occurrence
+func FindTagN(raw []byte, n int, tags ...uint8) ([]byte, error) {
+	return findTag(raw, n, tags...)
+}
+
+func findTag(raw []byte, occurrence int, tags ...uint8) ([]byte, error) {
 	if len(tags) == 0 {
 		return raw, nil
 	}
@@ -54,11 +63,17 @@ func FindTag(raw []byte, tags ...uint8) ([]byte, error) {
 		}
 
 		if tag == target {
+			// if it's the last tag in the search path, we start counting the occurrences
+			if len(tags) == 1 && occurrence > 0 {
+				occurrence--
+				continue
+			}
+
 			if len(tags) == 1 {
 				return data, nil
 			}
 
-			return FindTag(data, tags[1:]...)
+			return findTag(data, occurrence, tags[1:]...)
 		}
 	}
 }

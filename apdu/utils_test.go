@@ -41,3 +41,15 @@ func TestFindTag(t *testing.T) {
 	_, err = FindTag(data, uint8(0xC1), uint8(0xC3))
 	assert.Equal(t, &ErrTagNotFound{uint8(0xC3)}, err)
 }
+
+func TestFindTagN(t *testing.T) {
+	data := hexutils.HexToBytes("0A 01 A1 0A 01 A2")
+
+	tagData, err := FindTagN(data, 0, uint8(0x0A))
+	assert.NoError(t, err)
+	assert.Equal(t, "A1", hexutils.BytesToHexWithSpaces(tagData))
+
+	tagData, err = FindTagN(data, 1, uint8(0x0A))
+	assert.NoError(t, err)
+	assert.Equal(t, "A2", hexutils.BytesToHexWithSpaces(tagData))
+}

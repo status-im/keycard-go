@@ -1,4 +1,4 @@
-package lightwallet
+package actionsets
 
 import (
 	"crypto/rand"
@@ -8,6 +8,8 @@ import (
 
 	"github.com/status-im/smartcard-go/apdu"
 	"github.com/status-im/smartcard-go/globalplatform"
+	"github.com/status-im/smartcard-go/lightwallet"
+	"github.com/status-im/smartcard-go/lightwallet/actions"
 )
 
 var (
@@ -62,36 +64,13 @@ func (i *Installer) Install(capFile *os.File, overwriteApplet bool) error {
 	return err
 }
 
-func (i *Installer) Init() (*Secrets, error) {
-	secrets, err := NewSecrets()
+func (i *Installer) Init() (*lightwallet.Secrets, error) {
+	secrets, err := lightwallet.NewSecrets()
 	if err != nil {
 		return nil, err
 	}
 
-	sel := globalplatform.NewCommandSelect(walletAID)
-	resp, err := i.send("select applet", sel)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.Data[0] != tagSelectResponsePreInitialized {
-		err := fmt.Errorf("card already initialized (%x).", resp.Data[0])
-		return nil, err
-	}
-
-	cardKeyData := resp.Data[2:]
-	secureChannel, err := NewSecureChannel(i.c, cardKeyData)
-	if err != nil {
-		return nil, err
-	}
-
-	data, err := secureChannel.OneShotEncrypt(secrets)
-	if err != nil {
-		return nil, err
-	}
-
-	cmd := NewCommandInit(data)
-	resp, err = i.send("init card", cmd)
+	err = actions.Init(i.c, secrets, walletAID)
 	if err != nil {
 		return nil, err
 	}
