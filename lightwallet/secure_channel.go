@@ -10,9 +10,9 @@ import (
 )
 
 type SecureChannel struct {
-	c      globalplatform.Channel
-	secret []byte
-	pubKey *ecdsa.PublicKey
+	c         globalplatform.Channel
+	secret    []byte
+	publicKey *ecdsa.PublicKey
 }
 
 func NewSecureChannel(c globalplatform.Channel, cardKeyData []byte) (*SecureChannel, error) {
@@ -29,10 +29,18 @@ func NewSecureChannel(c globalplatform.Channel, cardKeyData []byte) (*SecureChan
 	secret := crypto.GenerateECDHSharedSecret(key, cardPubKey)
 
 	return &SecureChannel{
-		c:      c,
-		secret: secret,
-		pubKey: &key.PublicKey,
+		c:         c,
+		secret:    secret,
+		publicKey: &key.PublicKey,
 	}, nil
+}
+
+func (sc *SecureChannel) PublicKey() *ecdsa.PublicKey {
+	return sc.publicKey
+}
+
+func (sc *SecureChannel) RawPublicKey() []byte {
+	return ethcrypto.FromECDSAPub(sc.publicKey)
 }
 
 func (sc *SecureChannel) Send(cmd *apdu.Command) (*apdu.Response, error) {
@@ -40,7 +48,7 @@ func (sc *SecureChannel) Send(cmd *apdu.Command) (*apdu.Response, error) {
 }
 
 func (sc *SecureChannel) OneShotEncrypt(secrets *Secrets) ([]byte, error) {
-	pubKeyData := ethcrypto.FromECDSAPub(sc.pubKey)
+	pubKeyData := ethcrypto.FromECDSAPub(sc.publicKey)
 	data := append([]byte(secrets.Pin()), []byte(secrets.Puk())...)
 	data = append(data, secrets.PairingToken()...)
 

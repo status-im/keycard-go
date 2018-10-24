@@ -37,7 +37,7 @@ func NewInstaller(t globalplatform.Transmitter) *Installer {
 
 // Install installs the applet from the specified capFile.
 func (i *Installer) Install(capFile *os.File, overwriteApplet bool) error {
-	err := i.initSecureChannel(cardManagerAID)
+	err := i.initGPSecureChannel(cardManagerAID)
 	if err != nil {
 		return err
 	}
@@ -70,7 +70,12 @@ func (i *Installer) Init() (*lightwallet.Secrets, error) {
 		return nil, err
 	}
 
-	err = actions.Init(i.c, secrets, walletAID)
+	cardPubKey, err := actions.SelectNotInitialized(i.c, walletAID)
+	if err != nil {
+		return nil, err
+	}
+
+	err = actions.Init(i.c, cardPubKey, secrets, walletAID)
 	if err != nil {
 		return nil, err
 	}
@@ -78,9 +83,18 @@ func (i *Installer) Init() (*lightwallet.Secrets, error) {
 	return secrets, nil
 }
 
+func (i *Installer) Pair(pairingPass, pin string) (*lightwallet.PairingInfo, error) {
+	_, err := actions.SelectInitialized(i.c, walletAID)
+	if err != nil {
+		return nil, err
+	}
+
+	return actions.Pair(i.c, pairingPass, pin)
+}
+
 // Info returns if the applet is already installed in the card.
 func (i *Installer) Info() (bool, error) {
-	err := i.initSecureChannel(cardManagerAID)
+	err := i.initGPSecureChannel(cardManagerAID)
 	if err != nil {
 		return false, err
 	}
@@ -90,7 +104,7 @@ func (i *Installer) Info() (bool, error) {
 
 // Delete deletes the applet and related package from the card.
 func (i *Installer) Delete() error {
-	err := i.initSecureChannel(cardManagerAID)
+	err := i.initGPSecureChannel(cardManagerAID)
 	if err != nil {
 		return err
 	}
@@ -112,7 +126,7 @@ func (i *Installer) isAppletInstalled() (bool, error) {
 	return true, nil
 }
 
-func (i *Installer) initSecureChannel(sdaid []byte) error {
+func (i *Installer) initGPSecureChannel(sdaid []byte) error {
 	// select card manager
 	err := i.selectAID(sdaid)
 	if err != nil {
