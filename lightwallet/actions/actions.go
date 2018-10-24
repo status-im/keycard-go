@@ -19,6 +19,7 @@ type ApplicationInfo struct {
 	PublicKey      []byte
 	Version        []byte
 	AvailableSlots []byte
+	KeyUID         []byte
 }
 
 func Select(c globalplatform.Channel, aid []byte) (*ApplicationInfo, error) {
@@ -88,10 +89,16 @@ func parseApplicationInfo(resp *apdu.Response) (*ApplicationInfo, error) {
 		return nil, err
 	}
 
+	keyUID, err := apdu.FindTagN(resp.Data, 0, lightwallet.TagApplicationInfoTemplate, uint8(0x8E))
+	if err != nil {
+		return nil, err
+	}
+
 	return &ApplicationInfo{
 		InstanceUID:    instanceUID,
 		PublicKey:      pubKey,
 		Version:        appVersion,
 		AvailableSlots: availableSlots,
+		KeyUID:         keyUID,
 	}, nil
 }
