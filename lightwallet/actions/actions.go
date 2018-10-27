@@ -1,7 +1,6 @@
 package actions
 
 import (
-	"bytes"
 	"crypto/rand"
 	"crypto/sha256"
 	"errors"
@@ -10,17 +9,13 @@ import (
 	"github.com/status-im/smartcard-go/apdu"
 	"github.com/status-im/smartcard-go/globalplatform"
 	"github.com/status-im/smartcard-go/lightwallet"
-	"golang.org/x/crypto/pbkdf2"
-	"golang.org/x/text/unicode/norm"
+	"github.com/status-im/smartcard-go/lightwallet/crypto"
 )
-
-const pairingSalt = "Status Hardware Wallet Lite"
 
 var (
 	ErrAlreadyInitialized             = errors.New("card already initialized")
 	ErrNotInitialized                 = errors.New("card not initialized")
 	ErrUnknownApplicationInfoTemplate = errors.New("unknown application info template")
-	ErrInvalidCardCryptogram          = errors.New("invalid card cryptogram")
 )
 
 func SelectNotInitialized(c globalplatform.Channel, aid []byte) ([]byte, error) {
@@ -80,8 +75,6 @@ func Init(c globalplatform.Channel, cardPubKey []byte, secrets *lightwallet.Secr
 }
 
 func Pair(c globalplatform.Channel, pairingPass string, pin string) (*lightwallet.PairingInfo, error) {
-	secretHash := pbkdf2.Key(norm.NFKD.Bytes([]byte(pairingPass)), norm.NFKD.Bytes([]byte(pairingSalt)), 50000, 32, sha256.New)
-
 	challenge := make([]byte, 32)
 	if _, err := rand.Read(challenge); err != nil {
 		return nil, err
@@ -97,19 +90,15 @@ func Pair(c globalplatform.Channel, pairingPass string, pin string) (*lightwalle
 		return nil, err
 	}
 
-	h := sha256.New()
-	h.Write(secretHash[:])
-	h.Write(challenge)
-
-	expectedCryptogram := h.Sum(nil)
 	cardCryptogram := resp.Data[:32]
 	cardChallenge := resp.Data[32:]
 
-	if !bytes.Equal(expectedCryptogram, cardCryptogram) {
-		return nil, ErrInvalidCardCryptogram
+	secretHash, err := crypto.VerifyCryptogram(challenge, pairingPass, cardCryptogram)
+	if err != nil {
+		return nil, err
 	}
 
-	h.Reset()
+	h := sha256.New()
 	h.Write(secretHash[:])
 	h.Write(cardChallenge)
 	cmd = lightwallet.NewCommandPairFinalStep(h.Sum(nil))
