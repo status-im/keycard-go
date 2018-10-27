@@ -13,6 +13,9 @@ type SecureChannel struct {
 	c         globalplatform.Channel
 	secret    []byte
 	publicKey *ecdsa.PublicKey
+	encKey    []byte
+	macKey    []byte
+	iv        []byte
 }
 
 func NewSecureChannel(c globalplatform.Channel, cardKeyData []byte) (*SecureChannel, error) {
@@ -33,6 +36,16 @@ func NewSecureChannel(c globalplatform.Channel, cardKeyData []byte) (*SecureChan
 		secret:    secret,
 		publicKey: &key.PublicKey,
 	}, nil
+}
+
+func (sc *SecureChannel) Init(iv, encKey, macKey []byte) {
+	sc.iv = iv
+	sc.encKey = encKey
+	sc.macKey = macKey
+}
+
+func (sc *SecureChannel) Secret() []byte {
+	return sc.secret
 }
 
 func (sc *SecureChannel) PublicKey() *ecdsa.PublicKey {

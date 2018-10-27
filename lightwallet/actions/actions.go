@@ -3,6 +3,7 @@ package actions
 import (
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/sha512"
 	"errors"
 	"fmt"
 
@@ -105,16 +106,29 @@ func Pair(c globalplatform.Channel, pairingPass string, pin string) (*lightwalle
 	}, nil
 }
 
-func OpenSecureChannel(c globalplatform.Channel, appInfo *lightwallet.ApplicationInfo, pairingIndex uint8, pairingKey []byte) error {
+func OpenSecureChannel(c globalplatform.Channel, appInfo *lightwallet.ApplicationInfo, pairingIndex uint8, pairingKey []byte) (*lightwallet.SecureChannel, error) {
 	sc, err := lightwallet.NewSecureChannel(c, appInfo.PublicKey)
-
 	cmd := lightwallet.NewCommandOpenSecureChannel(pairingIndex, sc.RawPublicKey())
 	resp, err := c.Send(cmd)
 	if err = checkOKResponse(err, resp); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	salt := resp.Data[:32]
+	iv := resp.Data[32:]
+
+	h := sha512.New()
+	h.Write(sc.Secret())
+	h.Write(pairingKey)
+	h.Write(salt)
+	data := h.Sum(nil)
+
+	encKey := data[:32]
+	macKey := data[32:]
+
+	sc.Init(iv, encKey, macKey)
+
+	return sc, nil
 }
 
 func parseApplicationInfo(resp *apdu.Response) (*lightwallet.ApplicationInfo, error) {
