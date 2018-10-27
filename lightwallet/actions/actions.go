@@ -21,11 +21,7 @@ var (
 func SelectNotInitialized(c globalplatform.Channel, aid []byte) ([]byte, error) {
 	sel := globalplatform.NewCommandSelect(aid)
 	resp, err := c.Send(sel)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = checkOKResponse(resp); err != nil {
+	if err = checkOKResponse(err, resp); err != nil {
 		return nil, err
 	}
 
@@ -39,11 +35,7 @@ func SelectNotInitialized(c globalplatform.Channel, aid []byte) ([]byte, error) 
 func SelectInitialized(c globalplatform.Channel, aid []byte) (*lightwallet.ApplicationInfo, error) {
 	sel := globalplatform.NewCommandSelect(aid)
 	resp, err := c.Send(sel)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = checkOKResponse(resp); err != nil {
+	if err = checkOKResponse(err, resp); err != nil {
 		return nil, err
 	}
 
@@ -67,11 +59,8 @@ func Init(c globalplatform.Channel, cardPubKey []byte, secrets *lightwallet.Secr
 
 	init := lightwallet.NewCommandInit(data)
 	resp, err := c.Send(init)
-	if err != nil {
-		return err
-	}
 
-	return checkOKResponse(resp)
+	return checkOKResponse(err, resp)
 }
 
 func Pair(c globalplatform.Channel, pairingPass string, pin string) (*lightwallet.PairingInfo, error) {
@@ -82,11 +71,7 @@ func Pair(c globalplatform.Channel, pairingPass string, pin string) (*lightwalle
 
 	cmd := lightwallet.NewCommandPairFirstStep(challenge)
 	resp, err := c.Send(cmd)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = checkOKResponse(resp); err != nil {
+	if err = checkOKResponse(err, resp); err != nil {
 		return nil, err
 	}
 
@@ -103,11 +88,7 @@ func Pair(c globalplatform.Channel, pairingPass string, pin string) (*lightwalle
 	h.Write(cardChallenge)
 	cmd = lightwallet.NewCommandPairFinalStep(h.Sum(nil))
 	resp, err = c.Send(cmd)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = checkOKResponse(resp); err != nil {
+	if err = checkOKResponse(err, resp); err != nil {
 		return nil, err
 	}
 
@@ -129,11 +110,7 @@ func OpenSecureChannel(c globalplatform.Channel, appInfo *lightwallet.Applicatio
 
 	cmd := lightwallet.NewCommandOpenSecureChannel(pairingIndex, sc.RawPublicKey())
 	resp, err := c.Send(cmd)
-	if err != nil {
-		return err
-	}
-
-	if err = checkOKResponse(resp); err != nil {
+	if err = checkOKResponse(err, resp); err != nil {
 		return err
 	}
 
@@ -179,7 +156,11 @@ func parseApplicationInfo(resp *apdu.Response) (*lightwallet.ApplicationInfo, er
 	}, nil
 }
 
-func checkOKResponse(resp *apdu.Response) error {
+func checkOKResponse(err error, resp *apdu.Response) error {
+	if err != nil {
+		return err
+	}
+
 	return checkResponse(resp, apdu.SwOK)
 }
 
