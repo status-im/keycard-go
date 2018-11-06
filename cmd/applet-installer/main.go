@@ -162,6 +162,7 @@ func commandInstall(i *actionsets.Installer) error {
 	}
 	defer f.Close()
 
+	fmt.Printf("installation can take a while...\n")
 	err = i.Install(f, *flagOverwrite)
 	if err != nil {
 		fail("installation error", "error", err)

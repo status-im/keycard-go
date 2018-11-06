@@ -70,12 +70,20 @@ func (i *Installer) Init() (*lightwallet.Secrets, error) {
 		return nil, err
 	}
 
-	cardPubKey, err := actions.SelectNotInitialized(i.c, walletAID)
+	info, err := actions.Select(i.c, walletAID)
 	if err != nil {
 		return nil, err
 	}
 
-	err = actions.Init(i.c, cardPubKey, secrets, walletAID)
+	if !info.Installed {
+		return nil, fmt.Errorf("applet not installed")
+	}
+
+	if info.Initialized {
+		return nil, fmt.Errorf("card already initialized")
+	}
+
+	err = actions.Init(i.c, info.PublicKey, secrets, walletAID)
 	if err != nil {
 		return nil, err
 	}
