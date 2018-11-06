@@ -1,6 +1,8 @@
 package lightwallet
 
 type ApplicationInfo struct {
+	Installed      bool
+	Initialized    bool
 	InstanceUID    []byte
 	PublicKey      []byte
 	Version        []byte
@@ -11,6 +13,6 @@ type ApplicationInfo struct {
 }
 
 type PairingInfo struct {
-	PairingKey   []byte
-	PairingIndex int
+	Key   []byte
+	Index int
 }

@@ -19,6 +19,34 @@ var (
 	ErrUnknownApplicationInfoTemplate = errors.New("unknown application info template")
 )
 
+func Select(c globalplatform.Channel, aid []byte) (*lightwallet.ApplicationInfo, error) {
+	sel := globalplatform.NewCommandSelect(aid)
+	resp, err := c.Send(sel)
+	if err != nil {
+		return nil, err
+	}
+
+	err = checkResponse(resp, globalplatform.SwOK, globalplatform.SwFileNotFound)
+	if err != nil {
+		return nil, err
+	}
+
+	info := &lightwallet.ApplicationInfo{}
+	if resp.Sw == globalplatform.SwFileNotFound {
+		return info, nil
+	}
+
+	info.Installed = true
+	if resp.Data[0] == lightwallet.TagSelectResponsePreInitialized {
+		info.PublicKey = resp.Data[2:]
+		return info, nil
+	}
+
+	info.Initialized = true
+
+	return parseApplicationInfo(resp.Data, info)
+}
+
 func SelectNotInitialized(c globalplatform.Channel, aid []byte) ([]byte, error) {
 	sel := globalplatform.NewCommandSelect(aid)
 	resp, err := c.Send(sel)
@@ -44,7 +72,7 @@ func SelectInitialized(c globalplatform.Channel, aid []byte) (*lightwallet.Appli
 		return nil, ErrNotInitialized
 	}
 
-	return parseApplicationInfo(resp)
+	return parseApplicationInfo(resp.Data, &lightwallet.ApplicationInfo{})
 }
 
 func Init(c globalplatform.Channel, cardPubKey []byte, secrets *lightwallet.Secrets, aid []byte) error {
@@ -101,8 +129,8 @@ func Pair(c globalplatform.Channel, pairingPass string, pin string) (*lightwalle
 	pairingIndex := resp.Data[0]
 
 	return &lightwallet.PairingInfo{
-		PairingKey:   pairingKey,
-		PairingIndex: int(pairingIndex),
+		Key:   pairingKey,
+		Index: int(pairingIndex),
 	}, nil
 }
 
@@ -131,43 +159,43 @@ func OpenSecureChannel(c globalplatform.Channel, appInfo *lightwallet.Applicatio
 	return sc, nil
 }
 
-func parseApplicationInfo(resp *apdu.Response) (*lightwallet.ApplicationInfo, error) {
-	if resp.Data[0] != lightwallet.TagApplicationInfoTemplate {
+func parseApplicationInfo(data []byte, info *lightwallet.ApplicationInfo) (*lightwallet.ApplicationInfo, error) {
+	if data[0] != lightwallet.TagApplicationInfoTemplate {
 		return nil, ErrUnknownApplicationInfoTemplate
 	}
 
-	instanceUID, err := apdu.FindTag(resp.Data, lightwallet.TagApplicationInfoTemplate, uint8(0x8F))
+	instanceUID, err := apdu.FindTag(data, lightwallet.TagApplicationInfoTemplate, uint8(0x8F))
 	if err != nil {
 		return nil, err
 	}
 
-	pubKey, err := apdu.FindTag(resp.Data, lightwallet.TagApplicationInfoTemplate, uint8(0x80))
+	pubKey, err := apdu.FindTag(data, lightwallet.TagApplicationInfoTemplate, uint8(0x80))
 	if err != nil {
 		return nil, err
 	}
 
-	appVersion, err := apdu.FindTag(resp.Data, lightwallet.TagApplicationInfoTemplate, uint8(0x02))
+	appVersion, err := apdu.FindTag(data, lightwallet.TagApplicationInfoTemplate, uint8(0x02))
 	if err != nil {
 		return nil, err
 	}
 
-	availableSlots, err := apdu.FindTagN(resp.Data, 1, lightwallet.TagApplicationInfoTemplate, uint8(0x02))
+	availableSlots, err := apdu.FindTagN(data, 1, lightwallet.TagApplicationInfoTemplate, uint8(0x02))
 	if err != nil {
 		return nil, err
 	}
 
-	keyUID, err := apdu.FindTagN(resp.Data, 0, lightwallet.TagApplicationInfoTemplate, uint8(0x8E))
+	keyUID, err := apdu.FindTagN(data, 0, lightwallet.TagApplicationInfoTemplate, uint8(0x8E))
 	if err != nil {
 		return nil, err
 	}
 
-	return &lightwallet.ApplicationInfo{
-		InstanceUID:    instanceUID,
-		PublicKey:      pubKey,
-		Version:        appVersion,
-		AvailableSlots: availableSlots,
-		KeyUID:         keyUID,
-	}, nil
+	info.InstanceUID = instanceUID
+	info.PublicKey = pubKey
+	info.Version = appVersion
+	info.AvailableSlots = availableSlots
+	info.KeyUID = keyUID
+
+	return info, nil
 }
 
 func checkOKResponse(err error, resp *apdu.Response) error {

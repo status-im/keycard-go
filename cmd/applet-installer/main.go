@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	stdlog "log"
@@ -9,7 +10,6 @@ import (
 
 	"github.com/ebfe/scard"
 	"github.com/ethereum/go-ethereum/log"
-	"github.com/status-im/hardware-wallet-go/hexutils"
 	"github.com/status-im/hardware-wallet-go/lightwallet/actionsets"
 )
 
@@ -47,9 +47,10 @@ func init() {
 
 	commands = map[string]commandFunc{
 		"install": commandInstall,
-		"status":  commandStatus,
+		"info":    commandInfo,
 		"delete":  commandDelete,
 		"init":    commandInit,
+		"pair":    commandPair,
 	}
 }
 
@@ -138,6 +139,17 @@ func main() {
 	usage()
 }
 
+func ask(description string) string {
+	r := bufio.NewReader(os.Stdin)
+	fmt.Printf("%s: ", description)
+	text, err := r.ReadString('\n')
+	if err != nil {
+		stdlog.Fatal(err)
+	}
+
+	return strings.TrimSpace(text)
+}
+
 func commandInstall(i *actionsets.Installer) error {
 	if *flagCapFile == "" {
 		logger.Error("you must specify a cap file path with the -f flag\n")
@@ -159,17 +171,19 @@ func commandInstall(i *actionsets.Installer) error {
 	return nil
 }
 
-func commandStatus(i *actionsets.Installer) error {
-	installed, err := i.Info()
+func commandInfo(i *actionsets.Installer) error {
+	info, err := i.Info()
 	if err != nil {
 		return err
 	}
 
-	if installed {
-		fmt.Printf("applet already installed\n")
-	} else {
-		fmt.Printf("applet not installed\n")
-	}
+	fmt.Printf("Installed: %+v\n", info.Installed)
+	fmt.Printf("Initialized: %+v\n", info.Initialized)
+	fmt.Printf("InstanceUID: 0x%x\n", info.InstanceUID)
+	fmt.Printf("PublicKey: 0x%x\n", info.PublicKey)
+	fmt.Printf("Version: 0x%x\n", info.Version)
+	fmt.Printf("AvailableSlots: 0x%x\n", info.AvailableSlots)
+	fmt.Printf("KeyUID: 0x%x\n", info.KeyUID)
 
 	return nil
 }
@@ -194,6 +208,20 @@ func commandInit(i *actionsets.Installer) error {
 	fmt.Printf("PIN %s\n", secrets.Pin())
 	fmt.Printf("PUK %s\n", secrets.Puk())
 	fmt.Printf("Pairing password: %s\n", secrets.PairingPass())
+
+	return nil
+}
+
+func commandPair(i *actionsets.Installer) error {
+	pairingPass := ask("Pairing password")
+	pin := ask("PIN")
+	info, err := i.Pair(pairingPass, pin)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Pairing key %x\n", info.Key)
+	fmt.Printf("Pairing Index %d\n", info.Index)
 
 	return nil
 }

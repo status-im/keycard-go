@@ -37,18 +37,18 @@ func NewInstaller(t globalplatform.Transmitter) *Installer {
 
 // Install installs the applet from the specified capFile.
 func (i *Installer) Install(capFile *os.File, overwriteApplet bool) error {
-	err := i.initGPSecureChannel(cardManagerAID)
+	info, err := actions.Select(i.c, walletAID)
 	if err != nil {
 		return err
 	}
 
-	installed, err := i.isAppletInstalled()
-	if err != nil {
-		return err
-	}
-
-	if installed && !overwriteApplet {
+	if info.Installed && !overwriteApplet {
 		return errors.New("applet already installed")
+	}
+
+	err = i.initGPSecureChannel(cardManagerAID)
+	if err != nil {
+		return err
 	}
 
 	err = i.deleteAID(ndefInstanceAID, walletAID, pkgAID)
@@ -93,13 +93,8 @@ func (i *Installer) Pair(pairingPass, pin string) (*lightwallet.PairingInfo, err
 }
 
 // Info returns if the applet is already installed in the card.
-func (i *Installer) Info() (bool, error) {
-	err := i.initGPSecureChannel(cardManagerAID)
-	if err != nil {
-		return false, err
-	}
-
-	return i.isAppletInstalled()
+func (i *Installer) Info() (*lightwallet.ApplicationInfo, error) {
+	return actions.Select(i.c, walletAID)
 }
 
 // Delete deletes the applet and related package from the card.
@@ -110,20 +105,6 @@ func (i *Installer) Delete() error {
 	}
 
 	return i.deleteAID(ndefInstanceAID, walletAID, pkgAID)
-}
-
-func (i *Installer) isAppletInstalled() (bool, error) {
-	cmd := globalplatform.NewCommandGetStatus(walletAID, globalplatform.P1GetStatusApplications)
-	resp, err := i.send("get status", cmd, globalplatform.SwOK, globalplatform.SwReferencedDataNotFound)
-	if err != nil {
-		return false, err
-	}
-
-	if resp.Sw == globalplatform.SwReferencedDataNotFound {
-		return false, nil
-	}
-
-	return true, nil
 }
 
 func (i *Installer) initGPSecureChannel(sdaid []byte) error {
