@@ -9,7 +9,8 @@ import (
 
 	"github.com/ebfe/scard"
 	"github.com/ethereum/go-ethereum/log"
-	"github.com/status-im/smartcard-go/lightwallet/actionsets"
+	"github.com/status-im/hardware-wallet-go/hexutils"
+	"github.com/status-im/hardware-wallet-go/lightwallet/actionsets"
 )
 
 type commandFunc func(*actionsets.Installer) error

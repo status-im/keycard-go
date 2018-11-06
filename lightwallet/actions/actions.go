@@ -7,10 +7,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/status-im/smartcard-go/apdu"
-	"github.com/status-im/smartcard-go/globalplatform"
-	"github.com/status-im/smartcard-go/lightwallet"
-	"github.com/status-im/smartcard-go/lightwallet/crypto"
+	"github.com/status-im/hardware-wallet-go/apdu"
+	"github.com/status-im/hardware-wallet-go/globalplatform"
+	"github.com/status-im/hardware-wallet-go/lightwallet"
+	"github.com/status-im/hardware-wallet-go/lightwallet/crypto"
 )
 
 var (
