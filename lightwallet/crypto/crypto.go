@@ -7,6 +7,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/sha512"
 	"errors"
 
 	"github.com/ethereum/go-ethereum/crypto"
@@ -63,10 +64,83 @@ func OneShotEncrypt(pubKeyData, secret, data []byte) ([]byte, error) {
 	return encrypted, nil
 }
 
-func appendPadding(blockSize int, data []byte) []byte {
-	paddingSize := blockSize - (len(data)+1)%blockSize
-	zeroes := bytes.Repeat([]byte{0x00}, paddingSize)
-	padding := append([]byte{0x80}, zeroes...)
+func DeriveSessionKeys(secret, pairingKey, cardData []byte) ([]byte, []byte, []byte) {
+	salt := cardData[:32]
+	iv := cardData[32:]
 
-	return append(data, padding...)
+	h := sha512.New()
+	h.Write(secret)
+	h.Write(pairingKey)
+	h.Write(salt)
+	data := h.Sum(nil)
+
+	encKey := data[:32]
+	macKey := data[32:]
+
+	return encKey, macKey, iv
+}
+
+func EncryptData(data []byte, encKey []byte, iv []byte) ([]byte, error) {
+	data = appendPadding(16, data)
+
+	block, err := aes.NewCipher(encKey)
+	if err != nil {
+		return nil, err
+	}
+
+	ciphertext := make([]byte, len(data))
+	mode := cipher.NewCBCEncrypter(block, iv)
+	mode.CryptBlocks(ciphertext, data)
+
+	return ciphertext, nil
+}
+
+func DecryptData(data []byte, encKey []byte, iv []byte) ([]byte, error) {
+	block, err := aes.NewCipher(encKey)
+	if err != nil {
+		return nil, err
+	}
+
+	plaintext := make([]byte, len(data))
+	mode := cipher.NewCBCDecrypter(block, iv)
+	mode.CryptBlocks(plaintext, data)
+
+	return removePadding(16, plaintext), nil
+}
+
+func CalculateMac(meta []byte, data []byte, macKey []byte) ([]byte, error) {
+	data = appendPadding(16, data)
+
+	block, err := aes.NewCipher(macKey)
+	if err != nil {
+		return nil, err
+	}
+
+	mode := cipher.NewCBCEncrypter(block, make([]byte, 16))
+	mode.CryptBlocks(meta, meta)
+	mode.CryptBlocks(data, data)
+
+	mac := data[len(data)-32 : len(data)-16]
+
+	return mac, nil
+}
+
+func appendPadding(blockSize int, data []byte) []byte {
+	paddingSize := blockSize - (len(data) % blockSize)
+	newData := make([]byte, len(data)+paddingSize)
+	copy(newData, data)
+	newData[len(data)] = 0x80
+
+	return newData
+}
+
+func removePadding(blockSize int, data []byte) []byte {
+	i := len(data) - 1
+	for ; i > len(data)-blockSize; i-- {
+		if data[i] == 0x80 {
+			break
+		}
+	}
+
+	return data[:i]
 }

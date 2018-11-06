@@ -3,8 +3,6 @@ package crypto
 import (
 	"bytes"
 	"crypto/cipher"
-
-	/* #nosec */
 	"crypto/des"
 )
 
@@ -25,7 +23,6 @@ func DeriveKey(cardKey []byte, seq []byte, purpose []byte) ([]byte, error) {
 	copy(derivation, purpose[:2])
 	copy(derivation[2:], seq[:2])
 
-	/* #nosec */
 	block, err := des.NewTripleDESCipher(key24)
 	if err != nil {
 		return nil, err
@@ -57,13 +54,11 @@ func VerifyCryptogram(encKey, hostChallenge, cardChallenge, cardCryptogram []byt
 func MacFull3DES(key, data, iv []byte) ([]byte, error) {
 	data = AppendDESPadding(data)
 
-	/* #nosec */
 	desBlock, err := des.NewCipher(resizeKey8(key))
 	if err != nil {
 		return nil, err
 	}
 
-	/* #nosec */
 	des3Block, err := des.NewTripleDESCipher(resizeKey24(key))
 	if err != nil {
 		return nil, err
@@ -90,7 +85,6 @@ func MacFull3DES(key, data, iv []byte) ([]byte, error) {
 // EncryptICV encrypts an ICV with the specified macKey.
 // The ICV is usually the mac of the previous command sent in the current session.
 func EncryptICV(macKey, icv []byte) ([]byte, error) {
-	/* #nosec */
 	block, err := des.NewCipher(resizeKey8(macKey))
 	if err != nil {
 		return nil, err
@@ -107,7 +101,6 @@ func EncryptICV(macKey, icv []byte) ([]byte, error) {
 func Mac3DES(key, data, iv []byte) ([]byte, error) {
 	key24 := resizeKey24(key)
 
-	/* #nosec */
 	block, err := des.NewTripleDESCipher(key24)
 	if err != nil {
 		return nil, err
@@ -123,13 +116,11 @@ func Mac3DES(key, data, iv []byte) ([]byte, error) {
 
 // AppendDESPadding appends an 0x80 bytes to data and other zero bytes to make the result length multiple of 8.
 func AppendDESPadding(data []byte) []byte {
-	length := len(data) + 1
-	for ; length%8 != 0; length++ {
-	}
-
-	newData := make([]byte, length)
+	blockSize := 8
+	paddingSize := blockSize - (len(data) % blockSize)
+	newData := make([]byte, len(data)+paddingSize)
 	copy(newData, data)
-	copy(newData[len(data):], []byte{0x80})
+	newData[len(data)] = 0x80
 
 	return newData
 }

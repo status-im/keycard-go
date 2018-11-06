@@ -21,6 +21,10 @@ var (
 	walletAID       = []byte{0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x57, 0x61, 0x6C, 0x6C, 0x65, 0x74, 0x41, 0x70, 0x70}
 	ndefAppletAID   = []byte{0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x57, 0x61, 0x6C, 0x6C, 0x65, 0x74, 0x4E, 0x46, 0x43}
 	ndefInstanceAID = []byte{0xD2, 0x76, 0x00, 0x00, 0x85, 0x01, 0x01}
+
+	errAppletNotInstalled     = errors.New("applet not installed")
+	errCardNotInitialized     = errors.New("card not initialized")
+	errCardAlreadyInitialized = errors.New("card already initialized")
 )
 
 // Installer defines a struct with methods to install an applet to a smartcard.
@@ -76,11 +80,11 @@ func (i *Installer) Init() (*lightwallet.Secrets, error) {
 	}
 
 	if !info.Installed {
-		return nil, fmt.Errorf("applet not installed")
+		return nil, errAppletNotInstalled
 	}
 
 	if info.Initialized {
-		return nil, fmt.Errorf("card already initialized")
+		return nil, errCardAlreadyInitialized
 	}
 
 	err = actions.Init(i.c, info.PublicKey, secrets, walletAID)
@@ -100,9 +104,32 @@ func (i *Installer) Pair(pairingPass, pin string) (*lightwallet.PairingInfo, err
 	return actions.Pair(i.c, pairingPass, pin)
 }
 
-// Info returns if the applet is already installed in the card.
+// Info returns a lightwallet.ApplicationInfo struct with info about the card.
 func (i *Installer) Info() (*lightwallet.ApplicationInfo, error) {
 	return actions.Select(i.c, walletAID)
+}
+
+// Status returns
+func (i *Installer) Status(index uint8, key []byte) error {
+	info, err := actions.Select(i.c, walletAID)
+	if err != nil {
+		return err
+	}
+
+	if !info.Installed {
+		return errAppletNotInstalled
+	}
+
+	if !info.Initialized {
+		return errCardNotInitialized
+	}
+
+	sc, err := actions.OpenSecureChannel(i.c, info, index, key)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Delete deletes the applet and related package from the card.

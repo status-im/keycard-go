@@ -3,7 +3,6 @@ package actions
 import (
 	"crypto/rand"
 	"crypto/sha256"
-	"crypto/sha512"
 	"errors"
 	"fmt"
 
@@ -142,21 +141,31 @@ func OpenSecureChannel(c globalplatform.Channel, appInfo *lightwallet.Applicatio
 		return nil, err
 	}
 
-	salt := resp.Data[:32]
-	iv := resp.Data[32:]
-
-	h := sha512.New()
-	h.Write(sc.Secret())
-	h.Write(pairingKey)
-	h.Write(salt)
-	data := h.Sum(nil)
-
-	encKey := data[:32]
-	macKey := data[32:]
-
+	encKey, macKey, iv := crypto.DeriveSessionKeys(sc.Secret(), pairingKey, resp.Data)
 	sc.Init(iv, encKey, macKey)
 
+	err = mutualAuthenticate(sc)
+	if err != nil {
+		return nil, err
+	}
+
 	return sc, nil
+}
+
+func mutualAuthenticate(sc *lightwallet.SecureChannel) error {
+	data := make([]byte, 32)
+	if _, err := rand.Read(data); err != nil {
+		return err
+	}
+
+	cmd := lightwallet.NewCommandMutuallyAuthenticate(data)
+	resp, err := sc.Send(cmd)
+
+	return checkOKResponse(err, resp)
+}
+
+func Status(index uint8, key []byte) error {
+	return nil
 }
 
 func parseApplicationInfo(data []byte, info *lightwallet.ApplicationInfo) (*lightwallet.ApplicationInfo, error) {

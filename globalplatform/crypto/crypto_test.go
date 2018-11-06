@@ -30,6 +30,16 @@ func TestAppendDESPadding(t *testing.T) {
 	result := AppendDESPadding(data)
 	expected := "AABB800000000000"
 	assert.Equal(t, expected, hexutils.BytesToHex(result))
+
+	data = hexutils.HexToBytes("01020304050607")
+	result = AppendDESPadding(data)
+	expected = "0102030405060780"
+	assert.Equal(t, expected, hexutils.BytesToHex(result))
+
+	data = hexutils.HexToBytes("0102030405060708")
+	result = AppendDESPadding(data)
+	expected = "01020304050607088000000000000000"
+	assert.Equal(t, expected, hexutils.BytesToHex(result))
 }
 
 func TestVerifyCryptogram(t *testing.T) {

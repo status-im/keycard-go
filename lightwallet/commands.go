@@ -6,9 +6,10 @@ import (
 )
 
 const (
-	InsInit              = uint8(0xFE)
-	InsOpenSecureChannel = uint8(0x10)
-	InsPair              = uint8(0x12)
+	InsInit                 = uint8(0xFE)
+	InsOpenSecureChannel    = uint8(0x10)
+	InsMutuallyAuthenticate = uint8(0x11)
+	InsPair                 = uint8(0x12)
 
 	TagSelectResponsePreInitialized = uint8(0x80)
 	TagApplicationInfoTemplate      = uint8(0xA4)
@@ -54,5 +55,15 @@ func NewCommandOpenSecureChannel(pairingIndex uint8, pubKey []byte) *apdu.Comman
 		pairingIndex,
 		uint8(0x00),
 		pubKey,
+	)
+}
+
+func NewCommandMutuallyAuthenticate(data []byte) *apdu.Command {
+	return apdu.NewCommand(
+		globalplatform.ClaGp,
+		InsMutuallyAuthenticate,
+		uint8(0x00),
+		uint8(0x00),
+		data,
 	)
 }

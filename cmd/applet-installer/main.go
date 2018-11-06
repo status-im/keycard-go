@@ -2,10 +2,12 @@ package main
 
 import (
 	"bufio"
+	"encoding/hex"
 	"flag"
 	"fmt"
 	stdlog "log"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/ebfe/scard"
@@ -51,6 +53,7 @@ func init() {
 		"delete":  commandDelete,
 		"init":    commandInit,
 		"pair":    commandPair,
+		"status":  commandStatus,
 	}
 }
 
@@ -150,6 +153,30 @@ func ask(description string) string {
 	return strings.TrimSpace(text)
 }
 
+func askHex(description string) []byte {
+	s := ask(description)
+	if s[:2] == "0x" {
+		s = s[2:]
+	}
+
+	data, err := hex.DecodeString(s)
+	if err != nil {
+		stdlog.Fatal(err)
+	}
+
+	return data
+}
+
+func askUint8(description string) uint8 {
+	s := ask(description)
+	i, err := strconv.ParseUint(s, 10, 8)
+	if err != nil {
+		stdlog.Fatal(err)
+	}
+
+	return uint8(i)
+}
+
 func commandInstall(i *actionsets.Installer) error {
 	if *flagCapFile == "" {
 		logger.Error("you must specify a cap file path with the -f flag\n")
@@ -221,8 +248,15 @@ func commandPair(i *actionsets.Installer) error {
 		return err
 	}
 
-	fmt.Printf("Pairing key %x\n", info.Key)
+	fmt.Printf("Pairing key 0x%x\n", info.Key)
 	fmt.Printf("Pairing Index %d\n", info.Index)
 
 	return nil
+}
+
+func commandStatus(i *actionsets.Installer) error {
+	index := askUint8("Pairing index")
+	key := askHex("Pairing key")
+
+	return i.Status(index, key)
 }
