@@ -12,10 +12,9 @@ import (
 
 	"github.com/ebfe/scard"
 	"github.com/ethereum/go-ethereum/log"
-	"github.com/status-im/hardware-wallet-go/lightwallet/actionsets"
 )
 
-type commandFunc func(*actionsets.Installer) error
+type commandFunc func(*Installer) error
 
 var (
 	logger = log.New("package", "status-go/cmd/hardware-wallet-light")
@@ -131,7 +130,7 @@ func main() {
 		logger.Debug("card protocol", "T", "unknown")
 	}
 
-	i := actionsets.NewInstaller(card)
+	i := NewInstaller(card)
 	if f, ok := commands[command]; ok {
 		err = f(i)
 		if err != nil {
@@ -180,7 +179,7 @@ func askUint8(description string) uint8 {
 	return uint8(i)
 }
 
-func commandInstall(i *actionsets.Installer) error {
+func commandInstall(i *Installer) error {
 	if *flagCapFile == "" {
 		logger.Error("you must specify a cap file path with the -f flag\n")
 		usage()
@@ -202,7 +201,7 @@ func commandInstall(i *actionsets.Installer) error {
 	return nil
 }
 
-func commandInfo(i *actionsets.Installer) error {
+func commandInfo(i *Installer) error {
 	info, err := i.Info()
 	if err != nil {
 		return err
@@ -219,7 +218,7 @@ func commandInfo(i *actionsets.Installer) error {
 	return nil
 }
 
-func commandDelete(i *actionsets.Installer) error {
+func commandDelete(i *Installer) error {
 	err := i.Delete()
 	if err != nil {
 		return err
@@ -230,7 +229,7 @@ func commandDelete(i *actionsets.Installer) error {
 	return nil
 }
 
-func commandInit(i *actionsets.Installer) error {
+func commandInit(i *Installer) error {
 	secrets, err := i.Init()
 	if err != nil {
 		return err
@@ -243,7 +242,7 @@ func commandInit(i *actionsets.Installer) error {
 	return nil
 }
 
-func commandPair(i *actionsets.Installer) error {
+func commandPair(i *Installer) error {
 	pairingPass := ask("Pairing password")
 	pin := ask("PIN")
 	info, err := i.Pair(pairingPass, pin)
@@ -257,7 +256,7 @@ func commandPair(i *actionsets.Installer) error {
 	return nil
 }
 
-func commandStatus(i *actionsets.Installer) error {
+func commandStatus(i *Installer) error {
 	index := askUint8("Pairing index")
 	key := askHex("Pairing key")
 

@@ -1,4 +1,4 @@
-package actionsets
+package main
 
 import (
 	"crypto/rand"
