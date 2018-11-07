@@ -13,15 +13,6 @@ import (
 )
 
 var (
-	cardManagerAID = []byte{0xa0, 0x00, 0x00, 0x01, 0x51, 0x00, 0x00, 0x00}
-	testKey        = []byte{0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f}
-
-	pkgAID = []byte{0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x57, 0x61, 0x6C, 0x6C, 0x65, 0x74}
-	// applet and instance aid
-	walletAID       = []byte{0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x57, 0x61, 0x6C, 0x6C, 0x65, 0x74, 0x41, 0x70, 0x70}
-	ndefAppletAID   = []byte{0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x57, 0x61, 0x6C, 0x6C, 0x65, 0x74, 0x4E, 0x46, 0x43}
-	ndefInstanceAID = []byte{0xD2, 0x76, 0x00, 0x00, 0x85, 0x01, 0x01}
-
 	errAppletNotInstalled     = errors.New("applet not installed")
 	errCardNotInitialized     = errors.New("card not initialized")
 	errCardAlreadyInitialized = errors.New("card already initialized")
@@ -41,7 +32,7 @@ func NewInstaller(t globalplatform.Transmitter) *Installer {
 
 // Install installs the applet from the specified capFile.
 func (i *Installer) Install(capFile *os.File, overwriteApplet bool) error {
-	info, err := actions.Select(i.c, walletAID)
+	info, err := actions.Select(i.c, lightwallet.WalletAID)
 	if err != nil {
 		return err
 	}
@@ -50,12 +41,12 @@ func (i *Installer) Install(capFile *os.File, overwriteApplet bool) error {
 		return errors.New("applet already installed")
 	}
 
-	err = i.initGPSecureChannel(cardManagerAID)
+	err = i.initGPSecureChannel(lightwallet.CardManagerAID)
 	if err != nil {
 		return err
 	}
 
-	err = i.deleteAID(ndefInstanceAID, walletAID, pkgAID)
+	err = i.deleteAID(lightwallet.NdefInstanceAID, lightwallet.WalletAID, lightwallet.AppletPkgAID)
 	if err != nil {
 		return err
 	}
@@ -74,7 +65,7 @@ func (i *Installer) Init() (*lightwallet.Secrets, error) {
 		return nil, err
 	}
 
-	info, err := actions.Select(i.c, walletAID)
+	info, err := actions.Select(i.c, lightwallet.WalletAID)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +78,7 @@ func (i *Installer) Init() (*lightwallet.Secrets, error) {
 		return nil, errCardAlreadyInitialized
 	}
 
-	err = actions.Init(i.c, info.PublicKey, secrets, walletAID)
+	err = actions.Init(i.c, info.PublicKey, secrets, lightwallet.WalletAID)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +87,7 @@ func (i *Installer) Init() (*lightwallet.Secrets, error) {
 }
 
 func (i *Installer) Pair(pairingPass, pin string) (*lightwallet.PairingInfo, error) {
-	_, err := actions.SelectInitialized(i.c, walletAID)
+	_, err := actions.SelectInitialized(i.c, lightwallet.WalletAID)
 	if err != nil {
 		return nil, err
 	}
@@ -106,12 +97,12 @@ func (i *Installer) Pair(pairingPass, pin string) (*lightwallet.PairingInfo, err
 
 // Info returns a lightwallet.ApplicationInfo struct with info about the card.
 func (i *Installer) Info() (*lightwallet.ApplicationInfo, error) {
-	return actions.Select(i.c, walletAID)
+	return actions.Select(i.c, lightwallet.WalletAID)
 }
 
 // Status returns
 func (i *Installer) Status(index uint8, key []byte) (*lightwallet.ApplicationStatus, error) {
-	info, err := actions.Select(i.c, walletAID)
+	info, err := actions.Select(i.c, lightwallet.WalletAID)
 	if err != nil {
 		return nil, err
 	}
@@ -134,12 +125,12 @@ func (i *Installer) Status(index uint8, key []byte) (*lightwallet.ApplicationSta
 
 // Delete deletes the applet and related package from the card.
 func (i *Installer) Delete() error {
-	err := i.initGPSecureChannel(cardManagerAID)
+	err := i.initGPSecureChannel(lightwallet.CardManagerAID)
 	if err != nil {
 		return err
 	}
 
-	return i.deleteAID(ndefInstanceAID, walletAID, pkgAID)
+	return i.deleteAID(lightwallet.NdefInstanceAID, lightwallet.WalletAID, lightwallet.AppletPkgAID)
 }
 
 func (i *Installer) initGPSecureChannel(sdaid []byte) error {
@@ -162,7 +153,7 @@ func (i *Installer) initGPSecureChannel(sdaid []byte) error {
 }
 
 func (i *Installer) selectAID(aid []byte) error {
-	sel := globalplatform.NewCommandSelect(cardManagerAID)
+	sel := globalplatform.NewCommandSelect(lightwallet.CardManagerAID)
 	_, err := i.send("select", sel)
 
 	return err
@@ -181,7 +172,7 @@ func (i *Installer) initializeUpdate() (*globalplatform.Session, error) {
 	}
 
 	// verify cryptogram and initialize session keys
-	keys := globalplatform.NewKeyProvider(testKey, testKey)
+	keys := globalplatform.NewKeyProvider(lightwallet.CardTestKey, lightwallet.CardTestKey)
 	session, err := globalplatform.NewSession(keys, resp, hostChallenge)
 
 	return session, err
@@ -213,7 +204,7 @@ func (i *Installer) deleteAID(aids ...[]byte) error {
 
 func (i *Installer) installApplets(capFile *os.File) error {
 	// install for load
-	preLoad := globalplatform.NewCommandInstallForLoad(pkgAID, cardManagerAID)
+	preLoad := globalplatform.NewCommandInstallForLoad(lightwallet.AppletPkgAID, lightwallet.CardManagerAID)
 	_, err := i.send("install for load", preLoad)
 	if err != nil {
 		return err
@@ -233,13 +224,13 @@ func (i *Installer) installApplets(capFile *os.File) error {
 		}
 	}
 
-	installNdef := globalplatform.NewCommandInstallForInstall(pkgAID, ndefAppletAID, ndefInstanceAID, []byte{})
+	installNdef := globalplatform.NewCommandInstallForInstall(lightwallet.AppletPkgAID, lightwallet.NdefAppletAID, lightwallet.NdefInstanceAID, []byte{})
 	_, err = i.send("install for install (ndef)", installNdef)
 	if err != nil {
 		return err
 	}
 
-	installWallet := globalplatform.NewCommandInstallForInstall(pkgAID, walletAID, walletAID, []byte{})
+	installWallet := globalplatform.NewCommandInstallForInstall(lightwallet.AppletPkgAID, lightwallet.WalletAID, lightwallet.WalletAID, []byte{})
 	_, err = i.send("install for install (wallet)", installWallet)
 
 	return err
