@@ -12,6 +12,13 @@ type ApplicationInfo struct {
 	KeyUID []byte
 }
 
+type ApplicationStatus struct {
+	PinRetryCount    int
+	PUKRetryCount    int
+	KeyInitialized   bool
+	PubKeyDerivation bool
+}
+
 type PairingInfo struct {
 	Key   []byte
 	Index int

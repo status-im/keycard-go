@@ -10,12 +10,16 @@ const (
 	InsOpenSecureChannel    = uint8(0x10)
 	InsMutuallyAuthenticate = uint8(0x11)
 	InsPair                 = uint8(0x12)
+	InsGetStatus            = uint8(0xF2)
 
 	TagSelectResponsePreInitialized = uint8(0x80)
+	TagApplicationStatusTemplate    = uint8(0xA3)
 	TagApplicationInfoTemplate      = uint8(0xA4)
 
-	P1PairingFirstStep = uint8(0x00)
-	P1PairingFinalStep = uint8(0x01)
+	P1PairingFirstStep     = uint8(0x00)
+	P1PairingFinalStep     = uint8(0x01)
+	P1GetStatusApplication = uint8(0x00)
+	P1GetStatusKeyPath     = uint8(0x01)
 )
 
 func NewCommandInit(data []byte) *apdu.Command {
@@ -66,4 +70,22 @@ func NewCommandMutuallyAuthenticate(data []byte) *apdu.Command {
 		uint8(0x00),
 		data,
 	)
+}
+
+func NewCommandGetStatus(p1 uint8) *apdu.Command {
+	return apdu.NewCommand(
+		globalplatform.ClaGp,
+		InsGetStatus,
+		p1,
+		uint8(0x00),
+		[]byte{},
+	)
+}
+
+func NewCommandGetStatusApplication() *apdu.Command {
+	return NewCommandGetStatus(P1GetStatusApplication)
+}
+
+func NewCommandGetStatusKeyPath() *apdu.Command {
+	return NewCommandGetStatus(P1GetStatusKeyPath)
 }

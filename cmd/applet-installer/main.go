@@ -258,5 +258,15 @@ func commandStatus(i *actionsets.Installer) error {
 	index := askUint8("Pairing index")
 	key := askHex("Pairing key")
 
-	return i.Status(index, key)
+	appStatus, err := i.Status(index, key)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Pin retry count: %d\n", appStatus.PinRetryCount)
+	fmt.Printf("PUK retry count: %d\n", appStatus.PUKRetryCount)
+	fmt.Printf("Key initialized: %v\n", appStatus.KeyInitialized)
+	fmt.Printf("Public key derivation: %v\n", appStatus.PubKeyDerivation)
+
+	return nil
 }

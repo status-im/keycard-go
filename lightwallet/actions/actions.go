@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"bytes"
 	"crypto/rand"
 	"crypto/sha256"
 	"errors"
@@ -13,9 +14,10 @@ import (
 )
 
 var (
-	ErrAlreadyInitialized             = errors.New("card already initialized")
-	ErrNotInitialized                 = errors.New("card not initialized")
-	ErrUnknownApplicationInfoTemplate = errors.New("unknown application info template")
+	ErrAlreadyInitialized                = errors.New("card already initialized")
+	ErrNotInitialized                    = errors.New("card not initialized")
+	ErrWrongApplicationInfoTemplate      = errors.New("wrong application info template")
+	ErrApplicationStatusTemplateNotFound = errors.New("application status template not found")
 )
 
 func Select(c globalplatform.Channel, aid []byte) (*lightwallet.ApplicationInfo, error) {
@@ -164,13 +166,19 @@ func mutualAuthenticate(sc *lightwallet.SecureChannel) error {
 	return checkOKResponse(err, resp)
 }
 
-func Status(index uint8, key []byte) error {
-	return nil
+func GetStatusApplication(c globalplatform.Channel) (*lightwallet.ApplicationStatus, error) {
+	cmd := lightwallet.NewCommandGetStatusApplication()
+	resp, err := c.Send(cmd)
+	if err = checkOKResponse(err, resp); err != nil {
+		return nil, err
+	}
+
+	return parseApplicationStatus(resp.Data)
 }
 
 func parseApplicationInfo(data []byte, info *lightwallet.ApplicationInfo) (*lightwallet.ApplicationInfo, error) {
 	if data[0] != lightwallet.TagApplicationInfoTemplate {
-		return nil, ErrUnknownApplicationInfoTemplate
+		return nil, ErrWrongApplicationInfoTemplate
 	}
 
 	instanceUID, err := apdu.FindTag(data, lightwallet.TagApplicationInfoTemplate, uint8(0x8F))
@@ -205,6 +213,37 @@ func parseApplicationInfo(data []byte, info *lightwallet.ApplicationInfo) (*ligh
 	info.KeyUID = keyUID
 
 	return info, nil
+}
+
+func parseApplicationStatus(data []byte) (*lightwallet.ApplicationStatus, error) {
+	appStatus := &lightwallet.ApplicationStatus{}
+
+	tpl, err := apdu.FindTag(data, lightwallet.TagApplicationStatusTemplate)
+	if err != nil {
+		return nil, ErrApplicationStatusTemplateNotFound
+	}
+
+	if pinRetryCount, err := apdu.FindTag(tpl, uint8(0x02)); err == nil && len(pinRetryCount) == 1 {
+		appStatus.PinRetryCount = int(pinRetryCount[0])
+	}
+
+	if pukRetryCount, err := apdu.FindTagN(tpl, 1, uint8(0x02)); err == nil && len(pukRetryCount) == 1 {
+		appStatus.PUKRetryCount = int(pukRetryCount[0])
+	}
+
+	if keyInitialized, err := apdu.FindTag(tpl, uint8(0x01)); err == nil {
+		if bytes.Equal(keyInitialized, []byte{0xFF}) {
+			appStatus.KeyInitialized = true
+		}
+	}
+
+	if keyDerivationSupported, err := apdu.FindTagN(tpl, 1, uint8(0x01)); err == nil {
+		if bytes.Equal(keyDerivationSupported, []byte{0xFF}) {
+			appStatus.PubKeyDerivation = true
+		}
+	}
+
+	return appStatus, nil
 }
 
 func checkOKResponse(err error, resp *apdu.Response) error {

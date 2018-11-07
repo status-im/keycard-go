@@ -110,26 +110,26 @@ func (i *Installer) Info() (*lightwallet.ApplicationInfo, error) {
 }
 
 // Status returns
-func (i *Installer) Status(index uint8, key []byte) error {
+func (i *Installer) Status(index uint8, key []byte) (*lightwallet.ApplicationStatus, error) {
 	info, err := actions.Select(i.c, walletAID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if !info.Installed {
-		return errAppletNotInstalled
+		return nil, errAppletNotInstalled
 	}
 
 	if !info.Initialized {
-		return errCardNotInitialized
+		return nil, errCardNotInitialized
 	}
 
 	sc, err := actions.OpenSecureChannel(i.c, info, index, key)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return actions.GetStatusApplication(sc)
 }
 
 // Delete deletes the applet and related package from the card.
