@@ -21,10 +21,10 @@ var (
 	logger = log.New("package", "status-go/cmd/hardware-wallet-light")
 
 	commands map[string]commandFunc
+	command  string
 
-	flagCommand   = flag.String("c", "", "command")
-	flagCapFile   = flag.String("f", "", "cap file path")
-	flagOverwrite = flag.Bool("o", false, "overwrite applet if already installed")
+	flagCapFile   = flag.String("a", "", "applet cap file path")
+	flagOverwrite = flag.Bool("f", false, "force applet installation if already installed")
 	flagLogLevel  = flag.String("l", "", `Log level, one of: "ERROR", "WARN", "INFO", "DEBUG", and "TRACE"`)
 )
 
@@ -44,7 +44,15 @@ func initLogger() {
 }
 
 func init() {
-	flag.Parse()
+	if len(os.Args) < 2 {
+		usage()
+	}
+
+	command = os.Args[1]
+	if len(os.Args) > 2 {
+		flag.CommandLine.Parse(os.Args[2:])
+	}
+
 	initLogger()
 
 	commands = map[string]commandFunc{
@@ -60,7 +68,7 @@ func init() {
 func usage() {
 	fmt.Printf("\nUsage: hardware-wallet-light COMMAND [FLAGS]\n\nValid commands:\n\n")
 	for name := range commands {
-		fmt.Printf("- %s\n", name)
+		fmt.Printf("  - %s\n", name)
 	}
 	fmt.Print("\nFlags:\n\n")
 	flag.PrintDefaults()
@@ -73,11 +81,6 @@ func fail(msg string, ctx ...interface{}) {
 }
 
 func main() {
-	if *flagCommand == "" {
-		logger.Error("you must specify a command")
-		usage()
-	}
-
 	ctx, err := scard.EstablishContext()
 	if err != nil {
 		fail("error establishing card context", "error", err)
@@ -129,16 +132,16 @@ func main() {
 	}
 
 	i := actionsets.NewInstaller(card)
-	if f, ok := commands[*flagCommand]; ok {
+	if f, ok := commands[command]; ok {
 		err = f(i)
 		if err != nil {
-			logger.Error("error executing command", "command", *flagCommand, "error", err)
+			logger.Error("error executing command", "command", command, "error", err)
 			os.Exit(1)
 		}
 		os.Exit(0)
 	}
 
-	fail("unknown command", "command", *flagCommand)
+	fail("unknown command", "command", command)
 	usage()
 }
 
