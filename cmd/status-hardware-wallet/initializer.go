@@ -18,20 +18,20 @@ var (
 	errCardAlreadyInitialized = errors.New("card already initialized")
 )
 
-// Installer defines a struct with methods to install an applet to a smartcard.
-type Installer struct {
+// Initializer defines a struct with methods to install applets and initialize a card.
+type Initializer struct {
 	c globalplatform.Channel
 }
 
-// NewInstaller returns a new Installer that communicates to Transmitter t.
-func NewInstaller(t globalplatform.Transmitter) *Installer {
-	return &Installer{
+// NewInitializer returns a new Initializer that communicates to Transmitter t.
+func NewInitializer(t globalplatform.Transmitter) *Initializer {
+	return &Initializer{
 		c: globalplatform.NewNormalChannel(t),
 	}
 }
 
 // Install installs the applet from the specified capFile.
-func (i *Installer) Install(capFile *os.File, overwriteApplet bool) error {
+func (i *Initializer) Install(capFile *os.File, overwriteApplet bool) error {
 	info, err := actions.Select(i.c, lightwallet.WalletAID)
 	if err != nil {
 		return err
@@ -59,7 +59,7 @@ func (i *Installer) Install(capFile *os.File, overwriteApplet bool) error {
 	return err
 }
 
-func (i *Installer) Init() (*lightwallet.Secrets, error) {
+func (i *Initializer) Init() (*lightwallet.Secrets, error) {
 	secrets, err := lightwallet.NewSecrets()
 	if err != nil {
 		return nil, err
@@ -86,7 +86,7 @@ func (i *Installer) Init() (*lightwallet.Secrets, error) {
 	return secrets, nil
 }
 
-func (i *Installer) Pair(pairingPass, pin string) (*lightwallet.PairingInfo, error) {
+func (i *Initializer) Pair(pairingPass, pin string) (*lightwallet.PairingInfo, error) {
 	_, err := actions.SelectInitialized(i.c, lightwallet.WalletAID)
 	if err != nil {
 		return nil, err
@@ -96,12 +96,12 @@ func (i *Installer) Pair(pairingPass, pin string) (*lightwallet.PairingInfo, err
 }
 
 // Info returns a lightwallet.ApplicationInfo struct with info about the card.
-func (i *Installer) Info() (*lightwallet.ApplicationInfo, error) {
+func (i *Initializer) Info() (*lightwallet.ApplicationInfo, error) {
 	return actions.Select(i.c, lightwallet.WalletAID)
 }
 
 // Status returns
-func (i *Installer) Status(index uint8, key []byte) (*lightwallet.ApplicationStatus, error) {
+func (i *Initializer) Status(index uint8, key []byte) (*lightwallet.ApplicationStatus, error) {
 	info, err := actions.Select(i.c, lightwallet.WalletAID)
 	if err != nil {
 		return nil, err
@@ -124,7 +124,7 @@ func (i *Installer) Status(index uint8, key []byte) (*lightwallet.ApplicationSta
 }
 
 // Delete deletes the applet and related package from the card.
-func (i *Installer) Delete() error {
+func (i *Initializer) Delete() error {
 	err := i.initGPSecureChannel(lightwallet.CardManagerAID)
 	if err != nil {
 		return err
@@ -133,7 +133,7 @@ func (i *Installer) Delete() error {
 	return i.deleteAID(lightwallet.NdefInstanceAID, lightwallet.WalletAID, lightwallet.AppletPkgAID)
 }
 
-func (i *Installer) initGPSecureChannel(sdaid []byte) error {
+func (i *Initializer) initGPSecureChannel(sdaid []byte) error {
 	// select card manager
 	err := i.selectAID(sdaid)
 	if err != nil {
@@ -152,14 +152,14 @@ func (i *Installer) initGPSecureChannel(sdaid []byte) error {
 	return i.externalAuthenticate(session)
 }
 
-func (i *Installer) selectAID(aid []byte) error {
+func (i *Initializer) selectAID(aid []byte) error {
 	sel := globalplatform.NewCommandSelect(lightwallet.CardManagerAID)
 	_, err := i.send("select", sel)
 
 	return err
 }
 
-func (i *Installer) initializeUpdate() (*globalplatform.Session, error) {
+func (i *Initializer) initializeUpdate() (*globalplatform.Session, error) {
 	hostChallenge, err := generateHostChallenge()
 	if err != nil {
 		return nil, err
@@ -178,7 +178,7 @@ func (i *Installer) initializeUpdate() (*globalplatform.Session, error) {
 	return session, err
 }
 
-func (i *Installer) externalAuthenticate(session *globalplatform.Session) error {
+func (i *Initializer) externalAuthenticate(session *globalplatform.Session) error {
 	encKey := session.KeyProvider().Enc()
 	extAuth, err := globalplatform.NewCommandExternalAuthenticate(encKey, session.CardChallenge(), session.HostChallenge())
 	if err != nil {
@@ -190,7 +190,7 @@ func (i *Installer) externalAuthenticate(session *globalplatform.Session) error 
 	return err
 }
 
-func (i *Installer) deleteAID(aids ...[]byte) error {
+func (i *Initializer) deleteAID(aids ...[]byte) error {
 	for _, aid := range aids {
 		del := globalplatform.NewCommandDelete(aid)
 		_, err := i.send("delete", del, globalplatform.SwOK, globalplatform.SwReferencedDataNotFound)
@@ -202,7 +202,7 @@ func (i *Installer) deleteAID(aids ...[]byte) error {
 	return nil
 }
 
-func (i *Installer) installApplets(capFile *os.File) error {
+func (i *Initializer) installApplets(capFile *os.File) error {
 	// install for load
 	preLoad := globalplatform.NewCommandInstallForLoad(lightwallet.AppletPkgAID, lightwallet.CardManagerAID)
 	_, err := i.send("install for load", preLoad)
@@ -236,7 +236,7 @@ func (i *Installer) installApplets(capFile *os.File) error {
 	return err
 }
 
-func (i *Installer) send(description string, cmd *apdu.Command, allowedResponses ...uint16) (*apdu.Response, error) {
+func (i *Initializer) send(description string, cmd *apdu.Command, allowedResponses ...uint16) (*apdu.Response, error) {
 	logger.Debug("sending apdu command", "name", description)
 	resp, err := i.c.Send(cmd)
 	if err != nil {

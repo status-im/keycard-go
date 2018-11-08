@@ -14,7 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/log"
 )
 
-type commandFunc func(*Installer) error
+type commandFunc func(*Initializer) error
 
 var (
 	logger = log.New("package", "status-go/cmd/hardware-wallet-light")
@@ -130,7 +130,7 @@ func main() {
 		logger.Debug("card protocol", "T", "unknown")
 	}
 
-	i := NewInstaller(card)
+	i := NewInitializer(card)
 	if f, ok := commands[command]; ok {
 		err = f(i)
 		if err != nil {
@@ -179,7 +179,7 @@ func askUint8(description string) uint8 {
 	return uint8(i)
 }
 
-func commandInstall(i *Installer) error {
+func commandInstall(i *Initializer) error {
 	if *flagCapFile == "" {
 		logger.Error("you must specify a cap file path with the -f flag\n")
 		usage()
@@ -201,7 +201,7 @@ func commandInstall(i *Installer) error {
 	return nil
 }
 
-func commandInfo(i *Installer) error {
+func commandInfo(i *Initializer) error {
 	info, err := i.Info()
 	if err != nil {
 		return err
@@ -218,7 +218,7 @@ func commandInfo(i *Installer) error {
 	return nil
 }
 
-func commandDelete(i *Installer) error {
+func commandDelete(i *Initializer) error {
 	err := i.Delete()
 	if err != nil {
 		return err
@@ -229,7 +229,7 @@ func commandDelete(i *Installer) error {
 	return nil
 }
 
-func commandInit(i *Installer) error {
+func commandInit(i *Initializer) error {
 	secrets, err := i.Init()
 	if err != nil {
 		return err
@@ -242,7 +242,7 @@ func commandInit(i *Installer) error {
 	return nil
 }
 
-func commandPair(i *Installer) error {
+func commandPair(i *Initializer) error {
 	pairingPass := ask("Pairing password")
 	pin := ask("PIN")
 	info, err := i.Pair(pairingPass, pin)
@@ -256,7 +256,7 @@ func commandPair(i *Installer) error {
 	return nil
 }
 
-func commandStatus(i *Installer) error {
+func commandStatus(i *Initializer) error {
 	index := askUint8("Pairing index")
 	key := askHex("Pairing key")
 
