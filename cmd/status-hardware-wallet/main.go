@@ -24,7 +24,7 @@ var (
 
 	flagCapFile   = flag.String("a", "", "applet cap file path")
 	flagOverwrite = flag.Bool("f", false, "force applet installation if already installed")
-	flagLogLevel  = flag.String("l", "", `Log level, one of: "ERROR", "WARN", "INFO", "DEBUG", and "TRACE"`)
+	flagLogLevel  = flag.String("l", "", `Log level, one of: "error", "warn", "info", "debug", and "trace"`)
 )
 
 func initLogger() {
@@ -43,6 +43,15 @@ func initLogger() {
 }
 
 func init() {
+	commands = map[string]commandFunc{
+		"install": commandInstall,
+		"info":    commandInfo,
+		"delete":  commandDelete,
+		"init":    commandInit,
+		"pair":    commandPair,
+		"status":  commandStatus,
+	}
+
 	if len(os.Args) < 2 {
 		usage()
 	}
@@ -53,15 +62,6 @@ func init() {
 	}
 
 	initLogger()
-
-	commands = map[string]commandFunc{
-		"install": commandInstall,
-		"info":    commandInfo,
-		"delete":  commandDelete,
-		"init":    commandInit,
-		"pair":    commandPair,
-		"status":  commandStatus,
-	}
 }
 
 func usage() {
