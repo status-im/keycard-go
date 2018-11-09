@@ -10,8 +10,11 @@
 
 ### Install the hardware wallet applet
 
+The install command will install an applet to the card.
+You can download the status `cap` file from the (status-im/hardware-wallet releases page)[https://github.com/status-im/hardware-wallet/releases].
+
 ```bash
-status-hardware-wallet install -l debug -a applets/wallet-new.cap
+status-hardware-wallet install -l debug -a PATH_TO_CAP_FILE
 ```
 
 In case the applet is already installed and you want to force a new installation you can pass the `-f` flag.
