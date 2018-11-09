@@ -1,6 +1,6 @@
 # status-hardware-wallet
 
-`status-hardware-wallet` is a command line tool you can use to initialize a [Status Hardware Wallet](https://github.com/status-im/hardware-wallet).
+`status-hardware-wallet` is a command line tool you can use to initialize a smartcard with the [Status Hardware Wallet](https://github.com/status-im/hardware-wallet).
 
 ## Installation
 
@@ -11,7 +11,7 @@
 ### Install the hardware wallet applet
 
 The install command will install an applet to the card.
-You can download the status `cap` file from the (status-im/hardware-wallet releases page)[https://github.com/status-im/hardware-wallet/releases].
+You can download the status `cap` file from the [status-im/hardware-wallet releases page](https://github.com/status-im/hardware-wallet/releases).
 
 ```bash
 status-hardware-wallet install -l debug -a PATH_TO_CAP_FILE
@@ -34,7 +34,7 @@ InstanceUID: 0x
 PublicKey: 0x112233...
 Version: 0x
 AvailableSlots: 0x
-KeyUID: 0x<Paste>
+KeyUID: 0x
 ```
 
 ### Card initialization
@@ -45,7 +45,6 @@ status-hardware-wallet init -l debug
 ```
 
 The `init` command initializes the card and generates the secrets needed to pair the card to a device.
-The output
 
 ```
 PIN 123456
