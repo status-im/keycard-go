@@ -24,6 +24,16 @@
 #   go-tests = true
 #   unused-packages = true
 
+[prune]
+  unused-packages = true
+  go-tests = true
+  non-go = true
+
+  [[prune.project]]
+    name = "github.com/ethereum/go-ethereum"
+    unused-packages = false
+    non-go = false
+
 
 [[constraint]]
   branch = "master"
@@ -31,7 +41,8 @@
 
 [[constraint]]
   name = "github.com/ethereum/go-ethereum"
-  version = "1.8.17"
+  version = "=v1.8.16"
+  source = "github.com/status-im/go-ethereum"
 
 [[constraint]]
   name = "github.com/stretchr/testify"
@@ -44,7 +55,3 @@
 [[constraint]]
   name = "golang.org/x/text"
   version = "0.3.0"
-
-[prune]
-  go-tests = true
-  unused-packages = true
