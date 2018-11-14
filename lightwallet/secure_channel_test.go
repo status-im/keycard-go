@@ -1,6 +1,7 @@
 package lightwallet
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/status-im/hardware-wallet-go/apdu"
@@ -14,7 +15,7 @@ type fakeChannel struct {
 
 func (fc *fakeChannel) Send(cmd *apdu.Command) (*apdu.Response, error) {
 	fc.lastCmd = cmd
-	return nil, nil
+	return nil, errors.New("test error")
 }
 
 func TestSecureChannel_Send(t *testing.T) {
