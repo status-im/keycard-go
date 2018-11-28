@@ -2,9 +2,20 @@
 
 `status-hardware-wallet` is a command line tool you can use to initialize a smartcard with the [Status Hardware Wallet](https://github.com/status-im/hardware-wallet).
 
+## Dependencies
+
+To install `hardware-wallet-go` you need `go` in your system.
+
+MacOSX:
+
+`brew install go`
+
 ## Installation
 
 `go get github.com/status-im/hardware-wallet-go/cmd/status-hardware-wallet`
+
+The executable will be installed in `$GOPATH/bin`.
+Check your `$GOPATH` with `go env`.
 
 ## Usage
 
@@ -50,6 +61,14 @@ The `init` command initializes the card and generates the secrets needed to pair
 PIN 123456
 PUK 123456789012
 Pairing password: RandomPairingPassword
+```
+
+### Deleting the applet from the card
+
+:warning: **WARNING! This command will remove the applet and all the keys from the card. ** :warning:
+
+```bash
+status-hardware-wallet delete -l debug
 ```
 
 ### Pairing
