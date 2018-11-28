@@ -65,7 +65,7 @@ Pairing password: RandomPairingPassword
 
 ### Deleting the applet from the card
 
-:warning: **WARNING! This command will remove the applet and all the keys from the card. ** :warning:
+:warning: **WARNING! This command will remove the applet and all the keys from the card.** :warning:
 
 ```bash
 status-hardware-wallet delete -l debug
