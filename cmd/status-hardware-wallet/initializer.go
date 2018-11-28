@@ -16,6 +16,8 @@ var (
 	errAppletNotInstalled     = errors.New("applet not installed")
 	errCardNotInitialized     = errors.New("card not initialized")
 	errCardAlreadyInitialized = errors.New("card already initialized")
+
+	ErrNotInitialized = errors.New("card not initialized")
 )
 
 // Initializer defines a struct with methods to install applets and initialize a card.
@@ -87,9 +89,13 @@ func (i *Initializer) Init() (*lightwallet.Secrets, error) {
 }
 
 func (i *Initializer) Pair(pairingPass, pin string) (*lightwallet.PairingInfo, error) {
-	_, err := actions.SelectInitialized(i.c, lightwallet.WalletAID)
+	appInfo, err := actions.Select(i.c, lightwallet.WalletAID)
 	if err != nil {
 		return nil, err
+	}
+
+	if !appInfo.Initialized {
+		return nil, ErrNotInitialized
 	}
 
 	return actions.Pair(i.c, pairingPass, pin)

@@ -15,7 +15,6 @@ import (
 
 var (
 	ErrAlreadyInitialized                = errors.New("card already initialized")
-	ErrNotInitialized                    = errors.New("card not initialized")
 	ErrWrongApplicationInfoTemplate      = errors.New("wrong application info template")
 	ErrApplicationStatusTemplateNotFound = errors.New("application status template not found")
 )
@@ -46,34 +45,6 @@ func Select(c globalplatform.Channel, aid []byte) (*lightwallet.ApplicationInfo,
 	info.Initialized = true
 
 	return parseApplicationInfo(resp.Data, info)
-}
-
-func SelectNotInitialized(c globalplatform.Channel, aid []byte) ([]byte, error) {
-	sel := globalplatform.NewCommandSelect(aid)
-	resp, err := c.Send(sel)
-	if err = checkOKResponse(err, resp); err != nil {
-		return nil, err
-	}
-
-	if resp.Data[0] != lightwallet.TagSelectResponsePreInitialized {
-		return nil, ErrAlreadyInitialized
-	}
-
-	return resp.Data[2:], nil
-}
-
-func SelectInitialized(c globalplatform.Channel, aid []byte) (*lightwallet.ApplicationInfo, error) {
-	sel := globalplatform.NewCommandSelect(aid)
-	resp, err := c.Send(sel)
-	if err = checkOKResponse(err, resp); err != nil {
-		return nil, err
-	}
-
-	if resp.Data[0] == lightwallet.TagSelectResponsePreInitialized {
-		return nil, ErrNotInitialized
-	}
-
-	return parseApplicationInfo(resp.Data, &lightwallet.ApplicationInfo{})
 }
 
 func Init(c globalplatform.Channel, cardPubKey []byte, secrets *lightwallet.Secrets, aid []byte) error {
