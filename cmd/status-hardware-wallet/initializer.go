@@ -224,7 +224,7 @@ func (i *Initializer) installApplets(capFile *os.File) error {
 
 	for load.Next() {
 		cmd := load.GetCommand()
-		_, err = i.send(fmt.Sprintf("load %d of 36", load.Index()), cmd)
+		_, err = i.send(fmt.Sprintf("load %d of 40", load.Index()+1), cmd)
 		if err != nil {
 			return err
 		}
