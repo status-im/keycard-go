@@ -6,13 +6,13 @@ GO_PROJECT_PATH=github.com/status-im/$(PROJECT_NAME)
 BIN_NAME=status-hardware-wallet
 DOCKER_IMAGE_NAME=status-hardware-wallet-build
 
-test:
-	go test -v ./...
-
 build:
 	go build -i -o $(GOBIN)/$(BIN_NAME) -v ./cmd/status-hardware-wallet
 	@echo "Compilation done."
 	@echo "Run \"build/bin/$(BIN_NAME) -h\" to view available commands."
+
+test:
+	go test -v ./...
 
 build-docker-image:
 	docker build -t $(DOCKER_IMAGE_NAME) -f _assets/Dockerfile .
