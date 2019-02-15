@@ -48,7 +48,7 @@ func (i *Initializer) Install(capFile *os.File, overwriteApplet bool) error {
 		return err
 	}
 
-	err = i.deleteAID(lightwallet.NdefInstanceAID, lightwallet.WalletAID, lightwallet.AppletPkgAID)
+	err = i.deleteAID(lightwallet.NdefInstanceAID, lightwallet.WalletInstanceAID, lightwallet.AppletPkgAID)
 	if err != nil {
 		return err
 	}
@@ -136,7 +136,7 @@ func (i *Initializer) Delete() error {
 		return err
 	}
 
-	return i.deleteAID(lightwallet.NdefInstanceAID, lightwallet.WalletAID, lightwallet.AppletPkgAID)
+	return i.deleteAID(lightwallet.NdefInstanceAID, lightwallet.WalletInstanceAID, lightwallet.AppletPkgAID)
 }
 
 func (i *Initializer) initGPSecureChannel(sdaid []byte) error {
