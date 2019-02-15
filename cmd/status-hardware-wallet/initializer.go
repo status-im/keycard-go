@@ -236,7 +236,7 @@ func (i *Initializer) installApplets(capFile *os.File) error {
 		return err
 	}
 
-	installWallet := globalplatform.NewCommandInstallForInstall(lightwallet.AppletPkgAID, lightwallet.WalletAID, lightwallet.WalletAID, []byte{})
+	installWallet := globalplatform.NewCommandInstallForInstall(lightwallet.AppletPkgAID, lightwallet.WalletAID, lightwallet.WalletInstanceAID, []byte{})
 	_, err = i.send("install for install (wallet)", installWallet)
 
 	return err
