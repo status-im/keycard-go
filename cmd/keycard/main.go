@@ -17,7 +17,7 @@ import (
 type commandFunc func(*Initializer) error
 
 var (
-	logger = log.New("package", "status-go/cmd/hardware-wallet-light")
+	logger = log.New("package", "status-go/cmd/keycard")
 
 	commands map[string]commandFunc
 	command  string
@@ -65,9 +65,9 @@ func init() {
 }
 
 func usage() {
-	fmt.Printf("\nUsage: hardware-wallet-light COMMAND [FLAGS]\n\nValid commands:\n\n")
+	fmt.Printf("\nUsage:\n  keycard COMMAND [FLAGS]\n\nAvailable commands:\n")
 	for name := range commands {
-		fmt.Printf("  - %s\n", name)
+		fmt.Printf("  %s\n", name)
 	}
 	fmt.Print("\nFlags:\n\n")
 	flag.PrintDefaults()

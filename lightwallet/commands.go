@@ -1,8 +1,8 @@
 package lightwallet
 
 import (
-	"github.com/status-im/hardware-wallet-go/apdu"
-	"github.com/status-im/hardware-wallet-go/globalplatform"
+	"github.com/status-im/keycard-go/apdu"
+	"github.com/status-im/keycard-go/globalplatform"
 )
 
 const (

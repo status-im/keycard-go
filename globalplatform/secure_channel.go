@@ -1,8 +1,8 @@
 package globalplatform
 
 import (
-	"github.com/status-im/hardware-wallet-go/apdu"
-	"github.com/status-im/hardware-wallet-go/hexutils"
+	"github.com/status-im/keycard-go/apdu"
+	"github.com/status-im/keycard-go/hexutils"
 )
 
 // SecureChannel wraps another channel and sends wrapped commands using APDUWrapper.

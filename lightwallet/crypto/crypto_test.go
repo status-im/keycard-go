@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/status-im/hardware-wallet-go/hexutils"
+	"github.com/status-im/keycard-go/hexutils"
 	"github.com/stretchr/testify/assert"
 )
 

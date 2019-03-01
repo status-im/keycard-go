@@ -1,15 +1,15 @@
 .PHONY: test build
 
 GOBIN = $(dir $(realpath $(firstword $(MAKEFILE_LIST))))build/bin
-PROJECT_NAME=hardware-wallet-go
+PROJECT_NAME=keycard-go
 GO_PROJECT_PATH=github.com/status-im/$(PROJECT_NAME)
-BIN_NAME=status-hardware-wallet
-DOCKER_IMAGE_NAME=status-hardware-wallet-build
+BIN_NAME=keycard
+DOCKER_IMAGE_NAME=keycard
 
 build:
-	go build -i -o $(GOBIN)/$(BIN_NAME) -v ./cmd/status-hardware-wallet
+	go build -i -o $(GOBIN)/$(BIN_NAME) -v ./cmd/keycard
 	@echo "Compilation done."
-	@echo "Run \"build/bin/$(BIN_NAME) -h\" to view available commands."
+	@echo "Run \"./build/bin/$(BIN_NAME) -h\" to view available commands."
 
 test:
 	go test -v ./...

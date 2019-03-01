@@ -1,6 +1,6 @@
 package globalplatform
 
-import "github.com/status-im/hardware-wallet-go/apdu"
+import "github.com/status-im/keycard-go/apdu"
 
 // Channel is an interface with a Send method to send apdu commands and receive apdu responses.
 type Channel interface {

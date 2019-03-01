@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/status-im/hardware-wallet-go/apdu"
+	"github.com/status-im/keycard-go/apdu"
 )
 
 var internalFiles = []string{
