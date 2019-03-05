@@ -8,15 +8,15 @@ import (
 	"github.com/status-im/keycard-go/globalplatform/crypto"
 )
 
-// APDUWrapper is a wrapper for apdu commands inside a global platform secure channel.
-type APDUWrapper struct {
+// SCP02Wrapper is a wrapper for apdu commands inside a global platform secure channel.
+type SCP02Wrapper struct {
 	macKey []byte
 	icv    []byte
 }
 
-// NewAPDUWrapper returns a new APDUWrapper using the specified key for MAC generation.
-func NewAPDUWrapper(macKey []byte) *APDUWrapper {
-	return &APDUWrapper{
+// NewSCP02Wrapper returns a new SCP02Wrapper using the specified key for MAC generation.
+func NewSCP02Wrapper(macKey []byte) *SCP02Wrapper {
+	return &SCP02Wrapper{
 		macKey: macKey,
 		icv:    crypto.NullBytes8,
 	}
@@ -24,7 +24,7 @@ func NewAPDUWrapper(macKey []byte) *APDUWrapper {
 
 // Wrap wraps the apdu command adding the MAC to the end of the command.
 // Future implementations will encrypt the message when needed.
-func (w *APDUWrapper) Wrap(cmd *apdu.Command) (*apdu.Command, error) {
+func (w *SCP02Wrapper) Wrap(cmd *apdu.Command) (*apdu.Command, error) {
 	macData := new(bytes.Buffer)
 
 	cla := cmd.Cla | 0x04

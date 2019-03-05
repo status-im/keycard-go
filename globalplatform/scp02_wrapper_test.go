@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAPDUWrapper_Wrap(t *testing.T) {
+func TestSCP02Wrapper_Wrap(t *testing.T) {
 	macKey := hexutils.HexToBytes("2983BA77D709C2DAA1E6000ABCCAC951")
-	w := NewAPDUWrapper(macKey)
+	w := NewSCP02Wrapper(macKey)
 
 	data := hexutils.HexToBytes("1d4de92eaf7a2c9f")
 	cmd := apdu.NewCommand(uint8(0x80), uint8(0x82), uint8(0x01), uint8(0x00), data)

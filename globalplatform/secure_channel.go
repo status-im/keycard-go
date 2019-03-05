@@ -5,11 +5,11 @@ import (
 	"github.com/status-im/keycard-go/hexutils"
 )
 
-// SecureChannel wraps another channel and sends wrapped commands using APDUWrapper.
+// SecureChannel wraps another channel and sends wrapped commands using SCP02Wrapper.
 type SecureChannel struct {
 	session *Session
 	c       Channel
-	w       *APDUWrapper
+	w       *SCP02Wrapper
 }
 
 // NewSecureChannel returns a new SecureChannel based on a session and wrapping a Channel c.
@@ -17,7 +17,7 @@ func NewSecureChannel(session *Session, c Channel) *SecureChannel {
 	return &SecureChannel{
 		session: session,
 		c:       c,
-		w:       NewAPDUWrapper(session.KeyProvider().Mac()),
+		w:       NewSCP02Wrapper(session.KeyProvider().Mac()),
 	}
 }
 
