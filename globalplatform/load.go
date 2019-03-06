@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"io/ioutil"
+	"math"
 	"os"
 	"strings"
 
@@ -15,12 +16,15 @@ var internalFiles = []string{
 	"Method", "StaticField", "Export", "ConstantPool", "RefLocation",
 }
 
+const blockSize = 247 // 255 - 8 bytes for MAC
+
 // LoadCommandStream implement a struct that generates multiple Load commands used to load files to smartcards.
 type LoadCommandStream struct {
 	data         *bytes.Reader
 	currentIndex uint8
 	currentData  []byte
 	p1           uint8
+	blocksCount  int
 }
 
 // NewLoadCommandStream returns a new LoadCommandStream to load the specified file.
@@ -36,19 +40,24 @@ func NewLoadCommandStream(file *os.File) (*LoadCommandStream, error) {
 	}
 
 	return &LoadCommandStream{
-		data: bytes.NewReader(data),
-		p1:   P1LoadMoreBlocks,
+		data:        bytes.NewReader(data),
+		p1:          P1LoadMoreBlocks,
+		blocksCount: int(math.Ceil(float64(len(data)) / float64(blockSize))),
 	}, nil
 }
 
+// BlocksCount returns the total number of blocks based on data length and blockSize
+func (lcs *LoadCommandStream) BlocksCount() int {
+	return lcs.blocksCount
+}
+
 // Next returns initialize the data for the next Load command.
-// TODO:@pilu update blockSize when using encrypted data
+// TODO:@gravityblast update blockSize when using encrypted data
 func (lcs *LoadCommandStream) Next() bool {
 	if lcs.data.Len() == 0 {
 		return false
 	}
 
-	blockSize := 247 // 255 - 8 bytes for MAC
 	buf := make([]byte, blockSize)
 	n, err := lcs.data.Read(buf)
 	if err != nil {
