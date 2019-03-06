@@ -25,7 +25,7 @@ func NewCommandSet(c Channel) *CommandSet {
 	}
 }
 
-func (cs *CommandSet) Select() ([]byte, error) {
+func (cs *CommandSet) Select() error {
 	cmd := apdu.NewCommand(
 		0x00,
 		InsSelect,
@@ -36,13 +36,8 @@ func (cs *CommandSet) Select() ([]byte, error) {
 
 	cmd.SetLe(0)
 	resp, err := cs.c.Send(cmd)
-	if err = cs.checkOK(resp, err); err != nil {
-		return nil, err
-	}
 
-	// issuer security domain
-	isd, _ := apdu.FindTag(resp.Data, 0x6F, 0x84)
-	return isd, err
+	return cs.checkOK(resp, err)
 }
 
 func (cs *CommandSet) OpenSecureChannel() error {
