@@ -1,24 +1,24 @@
 package globalplatform
 
-// KeyProvider is a struct that contains encoding and MAC keys used to communicate with smartcards.
-type KeyProvider struct {
+// SCP02Keys is a struct that contains encoding and MAC keys used to communicate with smartcards.
+type SCP02Keys struct {
 	enc []byte
 	mac []byte
 }
 
 // Enc returns the enc key data.
-func (k *KeyProvider) Enc() []byte {
+func (k *SCP02Keys) Enc() []byte {
 	return k.enc
 }
 
 // Mac returns the MAC key data.
-func (k *KeyProvider) Mac() []byte {
+func (k *SCP02Keys) Mac() []byte {
 	return k.mac
 }
 
-// NewKeyProvider returns a new KeyProvider with the specified ENC and MAC keys.
-func NewKeyProvider(enc, mac []byte) *KeyProvider {
-	return &KeyProvider{
+// NewSCP02Keys returns a new SCP02Keys with the specified ENC and MAC keys.
+func NewSCP02Keys(enc, mac []byte) *SCP02Keys {
+	return &SCP02Keys{
 		enc: enc,
 		mac: mac,
 	}
