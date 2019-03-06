@@ -25,17 +25,24 @@ func NewCommandSet(c Channel) *CommandSet {
 	}
 }
 
-func (cs *CommandSet) Select() error {
+func (cs *CommandSet) Select() ([]byte, error) {
 	cmd := apdu.NewCommand(
 		0x00,
 		InsSelect,
 		uint8(0x04),
 		uint8(0x00),
-		identifiers.CardManagerAID,
+		nil,
 	)
 
+	cmd.SetLe(0)
 	resp, err := cs.c.Send(cmd)
-	return cs.checkOK(resp, err)
+	if err = cs.checkOK(resp, err); err != nil {
+		return nil, err
+	}
+
+	// issuer security domain
+	isd, _ := apdu.FindTag(resp.Data, 0x6F, 0x84)
+	return isd, err
 }
 
 func (cs *CommandSet) OpenSecureChannel() error {
@@ -76,7 +83,7 @@ func (cs *CommandSet) DeleteKeycardInstancesAndPackage() error {
 }
 
 func (cs *CommandSet) LoadKeycardPackage(capFile *os.File, callback LoadingCallback) error {
-	preLoad := NewCommandInstallForLoad(identifiers.PackageAID, identifiers.CardManagerAID)
+	preLoad := NewCommandInstallForLoad(identifiers.PackageAID, []byte{})
 	resp, err := cs.c.Send(preLoad)
 	if err = cs.checkOK(resp, err); err != nil {
 		return err
