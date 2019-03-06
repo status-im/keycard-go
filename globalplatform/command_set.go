@@ -143,6 +143,9 @@ func (cs *CommandSet) initializeUpdate(hostChallenge []byte) error {
 	// verify cryptogram and initialize session keys
 	keys := NewSCP02Keys(identifiers.CardTestKey, identifiers.CardTestKey)
 	session, err := NewSession(keys, resp, hostChallenge)
+	if err != nil {
+		return err
+	}
 	cs.c = NewSecureChannel(session, cs.c)
 	cs.session = session
 
