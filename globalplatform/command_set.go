@@ -7,21 +7,12 @@ import (
 	"os"
 
 	"github.com/status-im/keycard-go/apdu"
-)
-
-var (
-	CardManagerAID = []byte{0xa0, 0x00, 0x00, 0x01, 0x51, 0x00, 0x00, 0x00}
-	CardTestKey    = []byte{0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f}
-	AppletPkgAID   = []byte{0xA0, 0x00, 0x00, 0x08, 0x04, 0x00, 0x01}
-
-	WalletAID         = []byte{0xA0, 0x00, 0x00, 0x08, 0x04, 0x00, 0x01, 0x01}
-	WalletInstanceAID = []byte{0xA0, 0x00, 0x00, 0x08, 0x04, 0x00, 0x01, 0x01, 0x01}
-
-	NdefAppletAID   = []byte{0xA0, 0x00, 0x00, 0x08, 0x04, 0x00, 0x01, 0x02}
-	NdefInstanceAID = []byte{0xD2, 0x76, 0x00, 0x00, 0x85, 0x01, 0x01}
+	"github.com/status-im/keycard-go/identifiers"
 )
 
 type LoadingCallback = func(loadingBlock, totalBlocks int)
+
+const defaultKeycardInstanceAID = 1
 
 type CommandSet struct {
 	c       Channel
@@ -40,7 +31,7 @@ func (cs *CommandSet) Select() error {
 		InsSelect,
 		uint8(0x04),
 		uint8(0x00),
-		CardManagerAID,
+		identifiers.CardManagerAID,
 	)
 
 	resp, err := cs.c.Send(cmd)
@@ -62,10 +53,15 @@ func (cs *CommandSet) OpenSecureChannel() error {
 }
 
 func (cs *CommandSet) DeleteKeycardInstancesAndPackage() error {
+	instanceAID, err := identifiers.KeycardInstanceAID(defaultKeycardInstanceAID)
+	if err != nil {
+		return err
+	}
+
 	ids := [][]byte{
-		NdefInstanceAID,
-		WalletInstanceAID,
-		AppletPkgAID,
+		identifiers.NdefInstanceAID,
+		instanceAID,
+		identifiers.PackageAID,
 	}
 
 	for _, id := range ids {
@@ -80,7 +76,7 @@ func (cs *CommandSet) DeleteKeycardInstancesAndPackage() error {
 }
 
 func (cs *CommandSet) LoadKeycardPackage(capFile *os.File, callback LoadingCallback) error {
-	preLoad := NewCommandInstallForLoad(AppletPkgAID, CardManagerAID)
+	preLoad := NewCommandInstallForLoad(identifiers.PackageAID, identifiers.CardManagerAID)
 	resp, err := cs.c.Send(preLoad)
 	if err = cs.checkOK(resp, err); err != nil {
 		return err
@@ -104,11 +100,24 @@ func (cs *CommandSet) LoadKeycardPackage(capFile *os.File, callback LoadingCallb
 }
 
 func (cs *CommandSet) InstallNDEFApplet(ndefRecord []byte) error {
-	return cs.installForInstall(AppletPkgAID, NdefAppletAID, NdefInstanceAID, ndefRecord)
+	return cs.installForInstall(
+		identifiers.PackageAID,
+		identifiers.NdefAID,
+		identifiers.NdefInstanceAID,
+		ndefRecord)
 }
 
 func (cs *CommandSet) InstallKeycardApplet() error {
-	return cs.installForInstall(AppletPkgAID, WalletAID, WalletInstanceAID, []byte{})
+	instanceAID, err := identifiers.KeycardInstanceAID(defaultKeycardInstanceAID)
+	if err != nil {
+		return err
+	}
+
+	return cs.installForInstall(
+		identifiers.PackageAID,
+		identifiers.KeycardAID,
+		instanceAID,
+		[]byte{})
 }
 
 func (cs *CommandSet) installForInstall(packageAID, appletAID, instanceAID, params []byte) error {
@@ -125,7 +134,7 @@ func (cs *CommandSet) initializeUpdate(hostChallenge []byte) error {
 	}
 
 	// verify cryptogram and initialize session keys
-	keys := NewSCP02Keys(CardTestKey, CardTestKey)
+	keys := NewSCP02Keys(identifiers.CardTestKey, identifiers.CardTestKey)
 	session, err := NewSession(keys, resp, hostChallenge)
 	cs.c = NewSecureChannel(session, cs.c)
 	cs.session = session
