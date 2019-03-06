@@ -8,6 +8,8 @@ import (
 	"github.com/status-im/keycard-go/globalplatform/crypto"
 )
 
+const supportedSCPVersion = 2
+
 // Session is a struct containing the keys and challenges used in the current communication with a card.
 type Session struct {
 	keys          *SCP02Keys
@@ -29,6 +31,11 @@ func NewSession(cardKeys *SCP02Keys, resp *apdu.Response, hostChallenge []byte) 
 
 	if len(resp.Data) != 28 {
 		return nil, apdu.NewErrBadResponse(resp.Sw, fmt.Sprintf("bad data length, expected 28, got %d", len(resp.Data)))
+	}
+
+	scpMajorVersion := resp.Data[11]
+	if scpMajorVersion != supportedSCPVersion {
+		return nil, fmt.Errorf("scp version %d not supported", scpMajorVersion)
 	}
 
 	cardChallenge := resp.Data[12:20]
