@@ -17,7 +17,7 @@ func NewSecureChannel(session *Session, c Channel) *SecureChannel {
 	return &SecureChannel{
 		session: session,
 		c:       c,
-		w:       NewSCP02Wrapper(session.KeyProvider().Mac()),
+		w:       NewSCP02Wrapper(session.Keys().Mac()),
 	}
 }
 

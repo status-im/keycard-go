@@ -10,7 +10,7 @@ import (
 
 // Session is a struct containing the keys and challenges used in the current communication with a card.
 type Session struct {
-	keyProvider   *KeyProvider
+	keys          *SCP02Keys
 	cardChallenge []byte
 	hostChallenge []byte
 }
@@ -18,7 +18,7 @@ type Session struct {
 var errBadCryptogram = errors.New("bad card cryptogram")
 
 // NewSession returns a new session after validating the cryptogram received from the card.
-func NewSession(cardKeys *KeyProvider, resp *apdu.Response, hostChallenge []byte) (*Session, error) {
+func NewSession(cardKeys *SCP02Keys, resp *apdu.Response, hostChallenge []byte) (*Session, error) {
 	if resp.Sw == SwSecurityConditionNotSatisfied {
 		return nil, apdu.NewErrBadResponse(resp.Sw, "security condition not satisfied")
 	}
@@ -45,7 +45,7 @@ func NewSession(cardKeys *KeyProvider, resp *apdu.Response, hostChallenge []byte
 		return nil, err
 	}
 
-	sessionKeys := NewKeyProvider(sessionEncKey, sessionMacKey)
+	sessionKeys := NewSCP02Keys(sessionEncKey, sessionMacKey)
 	verified, err := crypto.VerifyCryptogram(sessionKeys.Enc(), hostChallenge, cardChallenge, cardCryptogram)
 	if err != nil {
 		return nil, err
@@ -56,7 +56,7 @@ func NewSession(cardKeys *KeyProvider, resp *apdu.Response, hostChallenge []byte
 	}
 
 	s := &Session{
-		keyProvider:   sessionKeys,
+		keys:          sessionKeys,
 		cardChallenge: cardChallenge,
 		hostChallenge: hostChallenge,
 	}
@@ -64,9 +64,9 @@ func NewSession(cardKeys *KeyProvider, resp *apdu.Response, hostChallenge []byte
 	return s, nil
 }
 
-// KeyProvider return the current KeyProvider.
-func (s *Session) KeyProvider() *KeyProvider {
-	return s.keyProvider
+// Keys return the current SCP02Keys.
+func (s *Session) Keys() *SCP02Keys {
+	return s.keys
 }
 
 // CardChallenge returns the current card challenge.
