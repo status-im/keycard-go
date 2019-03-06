@@ -14,21 +14,21 @@ const (
 
 // ErrBadResponse defines an error conaining the returned Sw code and a description message.
 type ErrBadResponse struct {
-	sw      uint16
+	Sw      uint16
 	message string
 }
 
 // NewErrBadResponse returns a ErrBadResponse with the specified sw and message values.
 func NewErrBadResponse(sw uint16, message string) *ErrBadResponse {
 	return &ErrBadResponse{
-		sw:      sw,
+		Sw:      sw,
 		message: message,
 	}
 }
 
 // Error implements the error interface.
 func (e *ErrBadResponse) Error() string {
-	return fmt.Sprintf("bad response %x: %s", e.sw, e.message)
+	return fmt.Sprintf("bad response %x: %s", e.Sw, e.message)
 }
 
 // Response represents a struct containing the smartcard response fields.

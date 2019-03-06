@@ -3,7 +3,6 @@ package globalplatform
 import (
 	"crypto/rand"
 	"errors"
-	"fmt"
 	"os"
 
 	"github.com/status-im/keycard-go/apdu"
@@ -26,12 +25,16 @@ func NewCommandSet(c Channel) *CommandSet {
 }
 
 func (cs *CommandSet) Select() error {
+	return cs.SelectAID(nil)
+}
+
+func (cs *CommandSet) SelectAID(aid []byte) error {
 	cmd := apdu.NewCommand(
 		0x00,
 		InsSelect,
 		uint8(0x04),
 		uint8(0x00),
-		nil,
+		aid,
 	)
 
 	cmd.SetLe(0)
@@ -173,7 +176,7 @@ func (cs *CommandSet) checkOK(resp *apdu.Response, err error, allowedResponses .
 		}
 	}
 
-	return fmt.Errorf("unexpected response: %x", resp.Sw)
+	return apdu.NewErrBadResponse(resp.Sw, "unexpected response")
 }
 
 func generateHostChallenge() ([]byte, error) {
