@@ -50,6 +50,23 @@ func (cs *CommandSet) Select() error {
 	return err
 }
 
+func (cs *CommandSet) Init(secrets *Secrets) error {
+	secureChannel, err := NewSecureChannel(cs.c, cs.ApplicationInfo.PublicKey)
+	if err != nil {
+		return err
+	}
+
+	data, err := secureChannel.OneShotEncrypt(secrets)
+	if err != nil {
+		return err
+	}
+
+	init := NewCommandInit(data)
+	resp, err := cs.c.Send(init)
+
+	return cs.checkOK(resp, err)
+}
+
 func (cs *CommandSet) checkOK(resp *apdu.Response, err error, allowedResponses ...uint16) error {
 	if len(allowedResponses) == 0 {
 		allowedResponses = []uint16{apdu.SwOK}

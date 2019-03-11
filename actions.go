@@ -9,7 +9,6 @@ import (
 
 	"github.com/status-im/keycard-go/apdu"
 	"github.com/status-im/keycard-go/crypto"
-	"github.com/status-im/keycard-go/globalplatform"
 	"github.com/status-im/keycard-go/types"
 )
 
@@ -18,51 +17,6 @@ var (
 	ErrWrongApplicationInfoTemplate      = errors.New("wrong application info template")
 	ErrApplicationStatusTemplateNotFound = errors.New("application status template not found")
 )
-
-func Select(c types.Channel, aid []byte) (*types.ApplicationInfo, error) {
-	sel := globalplatform.NewCommandSelect(aid)
-	resp, err := c.Send(sel)
-	if err != nil {
-		return nil, err
-	}
-
-	err = checkResponse(resp, globalplatform.SwOK, globalplatform.SwFileNotFound)
-	if err != nil {
-		return nil, err
-	}
-
-	info := &types.ApplicationInfo{}
-	if resp.Sw == globalplatform.SwFileNotFound {
-		return info, nil
-	}
-
-	info.Installed = true
-	if resp.Data[0] == TagSelectResponsePreInitialized {
-		info.PublicKey = resp.Data[2:]
-		return info, nil
-	}
-
-	info.Initialized = true
-
-	return parseApplicationInfo(resp.Data, info)
-}
-
-func Init(c types.Channel, cardPubKey []byte, secrets *Secrets, aid []byte) error {
-	secureChannel, err := NewSecureChannel(c, cardPubKey)
-	if err != nil {
-		return err
-	}
-
-	data, err := secureChannel.OneShotEncrypt(secrets)
-	if err != nil {
-		return err
-	}
-
-	init := NewCommandInit(data)
-	resp, err := c.Send(init)
-
-	return checkOKResponse(err, resp)
-}
 
 func Pair(c types.Channel, pairingPass string, pin string) (*types.PairingInfo, error) {
 	challenge := make([]byte, 32)
@@ -145,45 +99,6 @@ func GetStatusApplication(c types.Channel) (*types.ApplicationStatus, error) {
 	}
 
 	return parseApplicationStatus(resp.Data)
-}
-
-func parseApplicationInfo(data []byte, info *types.ApplicationInfo) (*types.ApplicationInfo, error) {
-	if data[0] != TagApplicationInfoTemplate {
-		return nil, ErrWrongApplicationInfoTemplate
-	}
-
-	instanceUID, err := apdu.FindTag(data, TagApplicationInfoTemplate, uint8(0x8F))
-	if err != nil {
-		return nil, err
-	}
-
-	pubKey, err := apdu.FindTag(data, TagApplicationInfoTemplate, uint8(0x80))
-	if err != nil {
-		return nil, err
-	}
-
-	appVersion, err := apdu.FindTag(data, TagApplicationInfoTemplate, uint8(0x02))
-	if err != nil {
-		return nil, err
-	}
-
-	availableSlots, err := apdu.FindTagN(data, 1, TagApplicationInfoTemplate, uint8(0x02))
-	if err != nil {
-		return nil, err
-	}
-
-	keyUID, err := apdu.FindTagN(data, 0, TagApplicationInfoTemplate, uint8(0x8E))
-	if err != nil {
-		return nil, err
-	}
-
-	info.InstanceUID = instanceUID
-	info.PublicKey = pubKey
-	info.Version = appVersion
-	info.AvailableSlots = availableSlots
-	info.KeyUID = keyUID
-
-	return info, nil
 }
 
 func parseApplicationStatus(data []byte) (*types.ApplicationStatus, error) {
