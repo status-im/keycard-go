@@ -1,4 +1,4 @@
-# hardware-wallet-go
+# keycard-go
 
 `keycard-go` is a set of Go packages built to interact with the [Status Keycard](https://github.com/status-im/status-keycard).
 
