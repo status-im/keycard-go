@@ -10,10 +10,13 @@ import (
 	"github.com/status-im/keycard-go/types"
 )
 
+var ErrSecureChannelNotOpen = errors.New("secure channel not open")
+
 type LoadingCallback = func(loadingBlock, totalBlocks int)
 
 type CommandSet struct {
 	c       types.Channel
+	sc      *SecureChannel
 	session *Session
 }
 
@@ -57,6 +60,10 @@ func (cs *CommandSet) OpenSecureChannel() error {
 }
 
 func (cs *CommandSet) DeleteKeycardInstancesAndPackage() error {
+	if cs.sc == nil {
+		return ErrSecureChannelNotOpen
+	}
+
 	instanceAID, err := identifiers.KeycardInstanceAID(identifiers.KeycardDefaultInstanceIndex)
 	if err != nil {
 		return err
@@ -70,7 +77,7 @@ func (cs *CommandSet) DeleteKeycardInstancesAndPackage() error {
 
 	for _, id := range ids {
 		cmd := NewCommandDelete(id)
-		resp, err := cs.c.Send(cmd)
+		resp, err := cs.sc.Send(cmd)
 		if cs.checkOK(resp, err, SwOK, SwReferencedDataNotFound) != nil {
 			return err
 		}
@@ -80,8 +87,12 @@ func (cs *CommandSet) DeleteKeycardInstancesAndPackage() error {
 }
 
 func (cs *CommandSet) LoadKeycardPackage(capFile *os.File, callback LoadingCallback) error {
+	if cs.sc == nil {
+		return ErrSecureChannelNotOpen
+	}
+
 	preLoad := NewCommandInstallForLoad(identifiers.PackageAID, []byte{})
-	resp, err := cs.c.Send(preLoad)
+	resp, err := cs.sc.Send(preLoad)
 	if err = cs.checkOK(resp, err); err != nil {
 		return err
 	}
@@ -94,7 +105,7 @@ func (cs *CommandSet) LoadKeycardPackage(capFile *os.File, callback LoadingCallb
 	for load.Next() {
 		cmd := load.GetCommand()
 		callback(int(load.Index()), load.BlocksCount())
-		resp, err = cs.c.Send(cmd)
+		resp, err = cs.sc.Send(cmd)
 		if err = cs.checkOK(resp, err); err != nil {
 			return err
 		}
@@ -126,7 +137,7 @@ func (cs *CommandSet) InstallKeycardApplet() error {
 
 func (cs *CommandSet) installForInstall(packageAID, appletAID, instanceAID, params []byte) error {
 	cmd := NewCommandInstallForInstall(packageAID, appletAID, instanceAID, params)
-	resp, err := cs.c.Send(cmd)
+	resp, err := cs.sc.Send(cmd)
 	return cs.checkOK(resp, err)
 }
 
@@ -143,7 +154,7 @@ func (cs *CommandSet) initializeUpdate(hostChallenge []byte) error {
 	if err != nil {
 		return err
 	}
-	cs.c = NewSecureChannel(session, cs.c)
+	cs.sc = NewSecureChannel(session, cs.c)
 	cs.session = session
 
 	return nil
@@ -160,7 +171,7 @@ func (cs *CommandSet) externalAuthenticate() error {
 		return err
 	}
 
-	resp, err := cs.c.Send(cmd)
+	resp, err := cs.sc.Send(cmd)
 	return cs.checkOK(resp, err)
 }
 
