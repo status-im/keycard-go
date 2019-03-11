@@ -12,8 +12,6 @@ import (
 
 type LoadingCallback = func(loadingBlock, totalBlocks int)
 
-const defaultKeycardInstanceAID = 1
-
 type CommandSet struct {
 	c       types.Channel
 	session *Session
@@ -59,7 +57,7 @@ func (cs *CommandSet) OpenSecureChannel() error {
 }
 
 func (cs *CommandSet) DeleteKeycardInstancesAndPackage() error {
-	instanceAID, err := identifiers.KeycardInstanceAID(defaultKeycardInstanceAID)
+	instanceAID, err := identifiers.KeycardInstanceAID(identifiers.KeycardDefaultInstanceIndex)
 	if err != nil {
 		return err
 	}
@@ -114,7 +112,7 @@ func (cs *CommandSet) InstallNDEFApplet(ndefRecord []byte) error {
 }
 
 func (cs *CommandSet) InstallKeycardApplet() error {
-	instanceAID, err := identifiers.KeycardInstanceAID(defaultKeycardInstanceAID)
+	instanceAID, err := identifiers.KeycardInstanceAID(identifiers.KeycardDefaultInstanceIndex)
 	if err != nil {
 		return err
 	}
