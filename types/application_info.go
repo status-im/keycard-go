@@ -8,10 +8,25 @@ import (
 
 var ErrWrongApplicationInfoTemplate = errors.New("wrong application info template")
 
+type Capability uint8
+
 const (
-	TagSelectResponsePreInitialized = uint8(0x80)
-	TagApplicationStatusTemplate    = uint8(0xA3)
-	TagApplicationInfoTemplate      = uint8(0xA4)
+	TagSelectResponsePreInitialized uint8 = 0x80
+	TagApplicationStatusTemplate    uint8 = 0xA3
+	TagApplicationInfoTemplate      uint8 = 0xA4
+	TagApplicationInfoCapabilities  uint8 = 0x8D
+)
+
+const (
+	CapabilitySecureChannel         Capability = iota + 1
+	CapabilityKeyManagement         Capability = 1 << iota
+	CapabilityCredentialsManagement Capability = 1 << iota
+	CapabilityNDEF                  Capability = 1 << iota
+
+	CapabilityAll = CapabilitySecureChannel |
+		CapabilityKeyManagement |
+		CapabilityCredentialsManagement |
+		CapabilityNDEF
 )
 
 type ApplicationInfo struct {
@@ -23,13 +38,35 @@ type ApplicationInfo struct {
 	AvailableSlots []byte
 	// KeyUID is the sha256 of of the master public key on the card.
 	// It's empty if the card doesn't contain any key.
-	KeyUID []byte
+	KeyUID       []byte
+	Capabilities Capability
+}
+
+func (a *ApplicationInfo) HasCapability(c Capability) bool {
+	return a.Capabilities&c == c
+}
+
+func (a *ApplicationInfo) HasSecureChannelCapability() bool {
+	return a.HasCapability(CapabilitySecureChannel)
+}
+
+func (a *ApplicationInfo) HasKeyManagementCapability() bool {
+	return a.HasCapability(CapabilityKeyManagement)
+}
+
+func (a *ApplicationInfo) HasCredentialsManagementCapability() bool {
+	return a.HasCapability(CapabilityCredentialsManagement)
+}
+
+func (a *ApplicationInfo) HasNDEFCapability() bool {
+	return a.HasCapability(CapabilityNDEF)
 }
 
 func ParseApplicationInfo(data []byte) (info ApplicationInfo, err error) {
 	info.Installed = true
 	if data[0] == TagSelectResponsePreInitialized {
 		info.PublicKey = data[2:]
+		info.Capabilities = CapabilityCredentialsManagement
 		return info, nil
 	}
 
@@ -64,11 +101,18 @@ func ParseApplicationInfo(data []byte) (info ApplicationInfo, err error) {
 		return info, err
 	}
 
+	capabilities := CapabilityAll
+	capabilitiesBytes, err := apdu.FindTag(data, TagApplicationInfoCapabilities)
+	if err == nil && len(capabilitiesBytes) > 0 {
+		capabilities = Capability(capabilitiesBytes[0])
+	}
+
 	info.InstanceUID = instanceUID
 	info.PublicKey = pubKey
 	info.Version = appVersion
 	info.AvailableSlots = availableSlots
 	info.KeyUID = keyUID
+	info.Capabilities = capabilities
 
 	return info, nil
 }
