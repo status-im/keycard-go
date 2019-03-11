@@ -7,6 +7,7 @@ import (
 
 	"github.com/status-im/keycard-go/apdu"
 	"github.com/status-im/keycard-go/identifiers"
+	"github.com/status-im/keycard-go/types"
 )
 
 type LoadingCallback = func(loadingBlock, totalBlocks int)
@@ -14,11 +15,11 @@ type LoadingCallback = func(loadingBlock, totalBlocks int)
 const defaultKeycardInstanceAID = 1
 
 type CommandSet struct {
-	c       Channel
+	c       types.Channel
 	session *Session
 }
 
-func NewCommandSet(c Channel) *CommandSet {
+func NewCommandSet(c types.Channel) *CommandSet {
 	return &CommandSet{
 		c: c,
 	}

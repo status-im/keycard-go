@@ -19,7 +19,7 @@ var (
 	ErrApplicationStatusTemplateNotFound = errors.New("application status template not found")
 )
 
-func Select(c globalplatform.Channel, aid []byte) (*types.ApplicationInfo, error) {
+func Select(c types.Channel, aid []byte) (*types.ApplicationInfo, error) {
 	sel := globalplatform.NewCommandSelect(aid)
 	resp, err := c.Send(sel)
 	if err != nil {
@@ -47,7 +47,7 @@ func Select(c globalplatform.Channel, aid []byte) (*types.ApplicationInfo, error
 	return parseApplicationInfo(resp.Data, info)
 }
 
-func Init(c globalplatform.Channel, cardPubKey []byte, secrets *Secrets, aid []byte) error {
+func Init(c types.Channel, cardPubKey []byte, secrets *Secrets, aid []byte) error {
 	secureChannel, err := NewSecureChannel(c, cardPubKey)
 	if err != nil {
 		return err
@@ -64,7 +64,7 @@ func Init(c globalplatform.Channel, cardPubKey []byte, secrets *Secrets, aid []b
 	return checkOKResponse(err, resp)
 }
 
-func Pair(c globalplatform.Channel, pairingPass string, pin string) (*types.PairingInfo, error) {
+func Pair(c types.Channel, pairingPass string, pin string) (*types.PairingInfo, error) {
 	challenge := make([]byte, 32)
 	if _, err := rand.Read(challenge); err != nil {
 		return nil, err
@@ -106,7 +106,7 @@ func Pair(c globalplatform.Channel, pairingPass string, pin string) (*types.Pair
 	}, nil
 }
 
-func OpenSecureChannel(c globalplatform.Channel, appInfo *types.ApplicationInfo, pairingIndex uint8, pairingKey []byte) (*SecureChannel, error) {
+func OpenSecureChannel(c types.Channel, appInfo *types.ApplicationInfo, pairingIndex uint8, pairingKey []byte) (*SecureChannel, error) {
 	sc, err := NewSecureChannel(c, appInfo.PublicKey)
 	cmd := NewCommandOpenSecureChannel(pairingIndex, sc.RawPublicKey())
 	resp, err := c.Send(cmd)
@@ -137,7 +137,7 @@ func mutualAuthenticate(sc *SecureChannel) error {
 	return checkOKResponse(err, resp)
 }
 
-func GetStatusApplication(c globalplatform.Channel) (*types.ApplicationStatus, error) {
+func GetStatusApplication(c types.Channel) (*types.ApplicationStatus, error) {
 	cmd := NewCommandGetStatusApplication()
 	resp, err := c.Send(cmd)
 	if err = checkOKResponse(err, resp); err != nil {

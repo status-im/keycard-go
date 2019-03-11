@@ -3,17 +3,18 @@ package globalplatform
 import (
 	"github.com/status-im/keycard-go/apdu"
 	"github.com/status-im/keycard-go/hexutils"
+	"github.com/status-im/keycard-go/types"
 )
 
 // SecureChannel wraps another channel and sends wrapped commands using SCP02Wrapper.
 type SecureChannel struct {
 	session *Session
-	c       Channel
+	c       types.Channel
 	w       *SCP02Wrapper
 }
 
 // NewSecureChannel returns a new SecureChannel based on a session and wrapping a Channel c.
-func NewSecureChannel(session *Session, c Channel) *SecureChannel {
+func NewSecureChannel(session *Session, c types.Channel) *SecureChannel {
 	return &SecureChannel{
 		session: session,
 		c:       c,

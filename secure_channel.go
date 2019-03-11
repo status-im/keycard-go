@@ -9,12 +9,13 @@ import (
 	"github.com/status-im/keycard-go/apdu"
 	"github.com/status-im/keycard-go/crypto"
 	"github.com/status-im/keycard-go/globalplatform"
+	"github.com/status-im/keycard-go/types"
 )
 
 var ErrInvalidResponseMAC = errors.New("invalid response MAC")
 
 type SecureChannel struct {
-	c         globalplatform.Channel
+	c         types.Channel
 	secret    []byte
 	publicKey *ecdsa.PublicKey
 	encKey    []byte
@@ -22,7 +23,7 @@ type SecureChannel struct {
 	iv        []byte
 }
 
-func NewSecureChannel(c globalplatform.Channel, cardKeyData []byte) (*SecureChannel, error) {
+func NewSecureChannel(c types.Channel, cardKeyData []byte) (*SecureChannel, error) {
 	key, err := ethcrypto.GenerateKey()
 	if err != nil {
 		return nil, err
