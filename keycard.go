@@ -1,4 +1,4 @@
-package lightwallet
+package keycard
 
 import "github.com/ethereum/go-ethereum/log"
 

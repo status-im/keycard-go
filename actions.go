@@ -1,4 +1,4 @@
-package actions
+package keycard
 
 import (
 	"bytes"
@@ -8,9 +8,9 @@ import (
 	"fmt"
 
 	"github.com/status-im/keycard-go/apdu"
+	"github.com/status-im/keycard-go/crypto"
 	"github.com/status-im/keycard-go/globalplatform"
-	"github.com/status-im/keycard-go/lightwallet"
-	"github.com/status-im/keycard-go/lightwallet/crypto"
+	"github.com/status-im/keycard-go/types"
 )
 
 var (
@@ -19,7 +19,7 @@ var (
 	ErrApplicationStatusTemplateNotFound = errors.New("application status template not found")
 )
 
-func Select(c globalplatform.Channel, aid []byte) (*lightwallet.ApplicationInfo, error) {
+func Select(c globalplatform.Channel, aid []byte) (*types.ApplicationInfo, error) {
 	sel := globalplatform.NewCommandSelect(aid)
 	resp, err := c.Send(sel)
 	if err != nil {
@@ -31,13 +31,13 @@ func Select(c globalplatform.Channel, aid []byte) (*lightwallet.ApplicationInfo,
 		return nil, err
 	}
 
-	info := &lightwallet.ApplicationInfo{}
+	info := &types.ApplicationInfo{}
 	if resp.Sw == globalplatform.SwFileNotFound {
 		return info, nil
 	}
 
 	info.Installed = true
-	if resp.Data[0] == lightwallet.TagSelectResponsePreInitialized {
+	if resp.Data[0] == TagSelectResponsePreInitialized {
 		info.PublicKey = resp.Data[2:]
 		return info, nil
 	}
@@ -47,8 +47,8 @@ func Select(c globalplatform.Channel, aid []byte) (*lightwallet.ApplicationInfo,
 	return parseApplicationInfo(resp.Data, info)
 }
 
-func Init(c globalplatform.Channel, cardPubKey []byte, secrets *lightwallet.Secrets, aid []byte) error {
-	secureChannel, err := lightwallet.NewSecureChannel(c, cardPubKey)
+func Init(c globalplatform.Channel, cardPubKey []byte, secrets *Secrets, aid []byte) error {
+	secureChannel, err := NewSecureChannel(c, cardPubKey)
 	if err != nil {
 		return err
 	}
@@ -58,19 +58,19 @@ func Init(c globalplatform.Channel, cardPubKey []byte, secrets *lightwallet.Secr
 		return err
 	}
 
-	init := lightwallet.NewCommandInit(data)
+	init := NewCommandInit(data)
 	resp, err := c.Send(init)
 
 	return checkOKResponse(err, resp)
 }
 
-func Pair(c globalplatform.Channel, pairingPass string, pin string) (*lightwallet.PairingInfo, error) {
+func Pair(c globalplatform.Channel, pairingPass string, pin string) (*types.PairingInfo, error) {
 	challenge := make([]byte, 32)
 	if _, err := rand.Read(challenge); err != nil {
 		return nil, err
 	}
 
-	cmd := lightwallet.NewCommandPairFirstStep(challenge)
+	cmd := NewCommandPairFirstStep(challenge)
 	resp, err := c.Send(cmd)
 	if err = checkOKResponse(err, resp); err != nil {
 		return nil, err
@@ -87,7 +87,7 @@ func Pair(c globalplatform.Channel, pairingPass string, pin string) (*lightwalle
 	h := sha256.New()
 	h.Write(secretHash[:])
 	h.Write(cardChallenge)
-	cmd = lightwallet.NewCommandPairFinalStep(h.Sum(nil))
+	cmd = NewCommandPairFinalStep(h.Sum(nil))
 	resp, err = c.Send(cmd)
 	if err = checkOKResponse(err, resp); err != nil {
 		return nil, err
@@ -100,15 +100,15 @@ func Pair(c globalplatform.Channel, pairingPass string, pin string) (*lightwalle
 	pairingKey := h.Sum(nil)
 	pairingIndex := resp.Data[0]
 
-	return &lightwallet.PairingInfo{
+	return &types.PairingInfo{
 		Key:   pairingKey,
 		Index: int(pairingIndex),
 	}, nil
 }
 
-func OpenSecureChannel(c globalplatform.Channel, appInfo *lightwallet.ApplicationInfo, pairingIndex uint8, pairingKey []byte) (*lightwallet.SecureChannel, error) {
-	sc, err := lightwallet.NewSecureChannel(c, appInfo.PublicKey)
-	cmd := lightwallet.NewCommandOpenSecureChannel(pairingIndex, sc.RawPublicKey())
+func OpenSecureChannel(c globalplatform.Channel, appInfo *types.ApplicationInfo, pairingIndex uint8, pairingKey []byte) (*SecureChannel, error) {
+	sc, err := NewSecureChannel(c, appInfo.PublicKey)
+	cmd := NewCommandOpenSecureChannel(pairingIndex, sc.RawPublicKey())
 	resp, err := c.Send(cmd)
 	if err = checkOKResponse(err, resp); err != nil {
 		return nil, err
@@ -125,20 +125,20 @@ func OpenSecureChannel(c globalplatform.Channel, appInfo *lightwallet.Applicatio
 	return sc, nil
 }
 
-func mutualAuthenticate(sc *lightwallet.SecureChannel) error {
+func mutualAuthenticate(sc *SecureChannel) error {
 	data := make([]byte, 32)
 	if _, err := rand.Read(data); err != nil {
 		return err
 	}
 
-	cmd := lightwallet.NewCommandMutuallyAuthenticate(data)
+	cmd := NewCommandMutuallyAuthenticate(data)
 	resp, err := sc.Send(cmd)
 
 	return checkOKResponse(err, resp)
 }
 
-func GetStatusApplication(c globalplatform.Channel) (*lightwallet.ApplicationStatus, error) {
-	cmd := lightwallet.NewCommandGetStatusApplication()
+func GetStatusApplication(c globalplatform.Channel) (*types.ApplicationStatus, error) {
+	cmd := NewCommandGetStatusApplication()
 	resp, err := c.Send(cmd)
 	if err = checkOKResponse(err, resp); err != nil {
 		return nil, err
@@ -147,32 +147,32 @@ func GetStatusApplication(c globalplatform.Channel) (*lightwallet.ApplicationSta
 	return parseApplicationStatus(resp.Data)
 }
 
-func parseApplicationInfo(data []byte, info *lightwallet.ApplicationInfo) (*lightwallet.ApplicationInfo, error) {
-	if data[0] != lightwallet.TagApplicationInfoTemplate {
+func parseApplicationInfo(data []byte, info *types.ApplicationInfo) (*types.ApplicationInfo, error) {
+	if data[0] != TagApplicationInfoTemplate {
 		return nil, ErrWrongApplicationInfoTemplate
 	}
 
-	instanceUID, err := apdu.FindTag(data, lightwallet.TagApplicationInfoTemplate, uint8(0x8F))
+	instanceUID, err := apdu.FindTag(data, TagApplicationInfoTemplate, uint8(0x8F))
 	if err != nil {
 		return nil, err
 	}
 
-	pubKey, err := apdu.FindTag(data, lightwallet.TagApplicationInfoTemplate, uint8(0x80))
+	pubKey, err := apdu.FindTag(data, TagApplicationInfoTemplate, uint8(0x80))
 	if err != nil {
 		return nil, err
 	}
 
-	appVersion, err := apdu.FindTag(data, lightwallet.TagApplicationInfoTemplate, uint8(0x02))
+	appVersion, err := apdu.FindTag(data, TagApplicationInfoTemplate, uint8(0x02))
 	if err != nil {
 		return nil, err
 	}
 
-	availableSlots, err := apdu.FindTagN(data, 1, lightwallet.TagApplicationInfoTemplate, uint8(0x02))
+	availableSlots, err := apdu.FindTagN(data, 1, TagApplicationInfoTemplate, uint8(0x02))
 	if err != nil {
 		return nil, err
 	}
 
-	keyUID, err := apdu.FindTagN(data, 0, lightwallet.TagApplicationInfoTemplate, uint8(0x8E))
+	keyUID, err := apdu.FindTagN(data, 0, TagApplicationInfoTemplate, uint8(0x8E))
 	if err != nil {
 		return nil, err
 	}
@@ -186,10 +186,10 @@ func parseApplicationInfo(data []byte, info *lightwallet.ApplicationInfo) (*ligh
 	return info, nil
 }
 
-func parseApplicationStatus(data []byte) (*lightwallet.ApplicationStatus, error) {
-	appStatus := &lightwallet.ApplicationStatus{}
+func parseApplicationStatus(data []byte) (*types.ApplicationStatus, error) {
+	appStatus := &types.ApplicationStatus{}
 
-	tpl, err := apdu.FindTag(data, lightwallet.TagApplicationStatusTemplate)
+	tpl, err := apdu.FindTag(data, TagApplicationStatusTemplate)
 	if err != nil {
 		return nil, ErrApplicationStatusTemplateNotFound
 	}

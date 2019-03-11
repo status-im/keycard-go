@@ -1,4 +1,4 @@
-package lightwallet
+package keycard
 
 import (
 	"bytes"
@@ -7,8 +7,8 @@ import (
 
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/status-im/keycard-go/apdu"
+	"github.com/status-im/keycard-go/crypto"
 	"github.com/status-im/keycard-go/globalplatform"
-	"github.com/status-im/keycard-go/lightwallet/crypto"
 )
 
 var ErrInvalidResponseMAC = errors.New("invalid response MAC")

@@ -1,4 +1,4 @@
-package lightwallet
+package keycard
 
 import (
 	"crypto/rand"

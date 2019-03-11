@@ -1,4 +1,4 @@
-package lightwallet
+package keycard
 
 import (
 	"github.com/status-im/keycard-go/apdu"

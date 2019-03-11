@@ -1,4 +1,4 @@
-package lightwallet
+package types
 
 type ApplicationInfo struct {
 	Installed      bool
