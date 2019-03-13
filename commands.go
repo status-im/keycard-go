@@ -12,11 +12,6 @@ const (
 	InsPair                 = uint8(0x12)
 	InsGetStatus            = uint8(0xF2)
 
-	//TODO: remove
-	TagSelectResponsePreInitialized = uint8(0x80)
-	TagApplicationStatusTemplate    = uint8(0xA3)
-	TagApplicationInfoTemplate      = uint8(0xA4)
-
 	P1PairingFirstStep     = uint8(0x00)
 	P1PairingFinalStep     = uint8(0x01)
 	P1GetStatusApplication = uint8(0x00)
