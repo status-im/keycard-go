@@ -3,6 +3,7 @@ package keycard
 import (
 	"crypto/rand"
 	"crypto/sha256"
+	"errors"
 
 	"github.com/status-im/keycard-go/apdu"
 	"github.com/status-im/keycard-go/crypto"
@@ -14,7 +15,7 @@ import (
 type CommandSet struct {
 	c               types.Channel
 	sc              *SecureChannel
-	ApplicationInfo types.ApplicationInfo
+	ApplicationInfo *types.ApplicationInfo
 	PairingInfo     *types.PairingInfo
 }
 
@@ -22,6 +23,13 @@ func NewCommandSet(c types.Channel) *CommandSet {
 	return &CommandSet{
 		c:  c,
 		sc: NewSecureChannel(c),
+	}
+}
+
+func (cs *CommandSet) SetPairingInfo(key []byte, index int) {
+	cs.PairingInfo = &types.PairingInfo{
+		Key:   key,
+		Index: index,
 	}
 }
 
@@ -118,6 +126,50 @@ func (cs *CommandSet) Pair(pairingPass string) error {
 	}
 
 	return nil
+}
+
+func (cs *CommandSet) OpenSecureChannel() error {
+	if cs.ApplicationInfo == nil {
+		return errors.New("cannot open secure channel without setting PairingInfo")
+	}
+
+	cmd := NewCommandOpenSecureChannel(uint8(cs.PairingInfo.Index), cs.sc.RawPublicKey())
+	resp, err := cs.c.Send(cmd)
+	if err = cs.checkOK(resp, err); err != nil {
+		return err
+	}
+
+	encKey, macKey, iv := crypto.DeriveSessionKeys(cs.sc.Secret(), cs.PairingInfo.Key, resp.Data)
+	cs.sc.Init(iv, encKey, macKey)
+
+	err = cs.mutualAuthenticate()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (cs *CommandSet) GetStatus() (*types.ApplicationStatus, error) {
+	cmd := NewCommandGetStatusApplication()
+	resp, err := cs.sc.Send(cmd)
+	if err = cs.checkOK(resp, err); err != nil {
+		return nil, err
+	}
+
+	return types.ParseApplicationStatus(resp.Data)
+}
+
+func (cs *CommandSet) mutualAuthenticate() error {
+	data := make([]byte, 32)
+	if _, err := rand.Read(data); err != nil {
+		return err
+	}
+
+	cmd := NewCommandMutuallyAuthenticate(data)
+	resp, err := cs.sc.Send(cmd)
+
+	return cs.checkOK(resp, err)
 }
 
 func (cs *CommandSet) checkOK(resp *apdu.Response, err error, allowedResponses ...uint16) error {

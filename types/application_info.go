@@ -62,8 +62,11 @@ func (a *ApplicationInfo) HasNDEFCapability() bool {
 	return a.HasCapability(CapabilityNDEF)
 }
 
-func ParseApplicationInfo(data []byte) (info ApplicationInfo, err error) {
-	info.Installed = true
+func ParseApplicationInfo(data []byte) (*ApplicationInfo, error) {
+	info := &ApplicationInfo{
+		Installed: true,
+	}
+
 	if data[0] == TagSelectResponsePreInitialized {
 		info.PublicKey = data[2:]
 		info.Capabilities = CapabilityCredentialsManagement
@@ -78,32 +81,32 @@ func ParseApplicationInfo(data []byte) (info ApplicationInfo, err error) {
 	info.Initialized = true
 
 	if data[0] != TagApplicationInfoTemplate {
-		return info, ErrWrongApplicationInfoTemplate
+		return nil, ErrWrongApplicationInfoTemplate
 	}
 
 	instanceUID, err := apdu.FindTag(data, TagApplicationInfoTemplate, uint8(0x8F))
 	if err != nil {
-		return info, err
+		return nil, err
 	}
 
 	pubKey, err := apdu.FindTag(data, TagApplicationInfoTemplate, uint8(0x80))
 	if err != nil {
-		return info, err
+		return nil, err
 	}
 
 	appVersion, err := apdu.FindTag(data, TagApplicationInfoTemplate, uint8(0x02))
 	if err != nil {
-		return info, err
+		return nil, err
 	}
 
 	availableSlots, err := apdu.FindTagN(data, 1, TagApplicationInfoTemplate, uint8(0x02))
 	if err != nil {
-		return info, err
+		return nil, err
 	}
 
 	keyUID, err := apdu.FindTagN(data, 0, TagApplicationInfoTemplate, uint8(0x8E))
 	if err != nil {
-		return info, err
+		return nil, err
 	}
 
 	capabilities := CapabilityAll
