@@ -18,7 +18,7 @@ var (
 	ErrApplicationStatusTemplateNotFound = errors.New("application status template not found")
 )
 
-func Pair(c types.Channel, pairingPass string, pin string) (*types.PairingInfo, error) {
+func Pair(c types.Channel, pairingPass string) (*types.PairingInfo, error) {
 	challenge := make([]byte, 32)
 	if _, err := rand.Read(challenge); err != nil {
 		return nil, err
@@ -61,7 +61,7 @@ func Pair(c types.Channel, pairingPass string, pin string) (*types.PairingInfo, 
 }
 
 func OpenSecureChannel(c types.Channel, appInfo *types.ApplicationInfo, pairingIndex uint8, pairingKey []byte) (*SecureChannel, error) {
-	sc, err := NewSecureChannel(c, appInfo.PublicKey)
+	sc := NewSecureChannel(c)
 	cmd := NewCommandOpenSecureChannel(pairingIndex, sc.RawPublicKey())
 	resp, err := c.Send(cmd)
 	if err = checkOKResponse(err, resp); err != nil {

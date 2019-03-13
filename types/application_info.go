@@ -67,6 +67,11 @@ func ParseApplicationInfo(data []byte) (info ApplicationInfo, err error) {
 	if data[0] == TagSelectResponsePreInitialized {
 		info.PublicKey = data[2:]
 		info.Capabilities = CapabilityCredentialsManagement
+
+		if len(info.PublicKey) > 0 {
+			info.Capabilities = info.Capabilities | CapabilitySecureChannel
+		}
+
 		return info, nil
 	}
 

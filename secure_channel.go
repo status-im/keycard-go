@@ -16,6 +16,7 @@ var ErrInvalidResponseMAC = errors.New("invalid response MAC")
 
 type SecureChannel struct {
 	c         types.Channel
+	open      bool
 	secret    []byte
 	publicKey *ecdsa.PublicKey
 	encKey    []byte
@@ -23,30 +24,38 @@ type SecureChannel struct {
 	iv        []byte
 }
 
-func NewSecureChannel(c types.Channel, cardKeyData []byte) (*SecureChannel, error) {
+func NewSecureChannel(c types.Channel) *SecureChannel {
+	return &SecureChannel{
+		c: c,
+	}
+}
+
+func (sc *SecureChannel) GenerateSecret(cardPubKeyData []byte) error {
 	key, err := ethcrypto.GenerateKey()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	cardPubKey, err := ethcrypto.UnmarshalPubkey(cardKeyData)
+	cardPubKey, err := ethcrypto.UnmarshalPubkey(cardPubKeyData)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	secret := crypto.GenerateECDHSharedSecret(key, cardPubKey)
+	sc.publicKey = &key.PublicKey
+	sc.secret = crypto.GenerateECDHSharedSecret(key, cardPubKey)
 
-	return &SecureChannel{
-		c:         c,
-		secret:    secret,
-		publicKey: &key.PublicKey,
-	}, nil
+	return nil
+}
+
+func (sc *SecureChannel) Reset() {
+	sc.open = false
 }
 
 func (sc *SecureChannel) Init(iv, encKey, macKey []byte) {
 	sc.iv = iv
 	sc.encKey = encKey
 	sc.macKey = macKey
+	sc.open = true
 }
 
 func (sc *SecureChannel) Secret() []byte {
@@ -62,18 +71,20 @@ func (sc *SecureChannel) RawPublicKey() []byte {
 }
 
 func (sc *SecureChannel) Send(cmd *apdu.Command) (*apdu.Response, error) {
-	encData, err := crypto.EncryptData(cmd.Data, sc.encKey, sc.iv)
-	if err != nil {
-		return nil, err
-	}
+	if sc.open {
+		encData, err := crypto.EncryptData(cmd.Data, sc.encKey, sc.iv)
+		if err != nil {
+			return nil, err
+		}
 
-	meta := []byte{cmd.Cla, cmd.Ins, cmd.P1, cmd.P2, byte(len(encData) + 16), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-	if err = sc.updateIV(meta, encData); err != nil {
-		return nil, err
-	}
+		meta := []byte{cmd.Cla, cmd.Ins, cmd.P1, cmd.P2, byte(len(encData) + 16), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+		if err = sc.updateIV(meta, encData); err != nil {
+			return nil, err
+		}
 
-	newData := append(sc.iv, encData...)
-	cmd.Data = newData
+		newData := append(sc.iv, encData...)
+		cmd.Data = newData
+	}
 
 	resp, err := sc.c.Send(cmd)
 	if err != nil {
