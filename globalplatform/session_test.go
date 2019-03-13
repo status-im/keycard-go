@@ -10,7 +10,7 @@ import (
 
 func TestNewSession(t *testing.T) {
 	key := hexutils.HexToBytes("404142434445464748494a4b4c4d4e4f")
-	keys := NewKeyProvider(key, key)
+	keys := NewSCP02Keys(key, key)
 
 	raw := hexutils.HexToBytes("000002650183039536622002000de9c62ba1c4c8e55fcb91b6654ce49000")
 	resp, err := apdu.ParseResponse(raw)
@@ -25,19 +25,19 @@ func TestNewSession_BadResponse(t *testing.T) {
 	raw := hexutils.HexToBytes("01026982")
 	resp, err := apdu.ParseResponse(raw)
 	assert.NoError(t, err)
-	_, err = NewSession(&KeyProvider{}, resp, []byte{})
+	_, err = NewSession(&SCP02Keys{}, resp, []byte{})
 	assert.Error(t, err)
 
 	raw = hexutils.HexToBytes("01026983")
 	resp, err = apdu.ParseResponse(raw)
 	assert.NoError(t, err)
-	_, err = NewSession(&KeyProvider{}, resp, []byte{})
+	_, err = NewSession(&SCP02Keys{}, resp, []byte{})
 	assert.Error(t, err)
 
 	// bad data length
 	raw = hexutils.HexToBytes("01029000")
 	resp, err = apdu.ParseResponse(raw)
 	assert.NoError(t, err)
-	_, err = NewSession(&KeyProvider{}, resp, []byte{})
+	_, err = NewSession(&SCP02Keys{}, resp, []byte{})
 	assert.Error(t, err)
 }
