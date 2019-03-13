@@ -15,7 +15,7 @@ import (
 	"golang.org/x/text/unicode/norm"
 )
 
-const pairingSalt = "Status Hardware Wallet Lite"
+const PairingTokenSalt = "Keycard Pairing Password Salt"
 
 var ErrInvalidCardCryptogram = errors.New("invalid card cryptogram")
 
@@ -25,7 +25,7 @@ func GenerateECDHSharedSecret(priv *ecdsa.PrivateKey, pub *ecdsa.PublicKey) []by
 }
 
 func VerifyCryptogram(challenge []byte, pairingPass string, cardCryptogram []byte) ([]byte, error) {
-	secretHash := pbkdf2.Key(norm.NFKD.Bytes([]byte(pairingPass)), norm.NFKD.Bytes([]byte(pairingSalt)), 50000, 32, sha256.New)
+	secretHash := pbkdf2.Key(norm.NFKD.Bytes([]byte(pairingPass)), norm.NFKD.Bytes([]byte(PairingTokenSalt)), 50000, 32, sha256.New)
 
 	h := sha256.New()
 	h.Write(secretHash[:])

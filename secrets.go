@@ -7,14 +7,14 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/status-im/keycard-go/crypto"
 	"golang.org/x/crypto/pbkdf2"
 	"golang.org/x/text/unicode/norm"
 )
 
 const (
-	pairingTokenSalt = "Status Hardware Wallet Lite"
-	maxPukNumber     = int64(999999999999)
-	maxPinNumber     = int64(999999)
+	maxPukNumber = int64(999999999999)
+	maxPinNumber = int64(999999)
 )
 
 // Secrets contains the secret data needed to pair a client with a card.
@@ -81,5 +81,5 @@ func generatePairingPass() (string, error) {
 }
 
 func generatePairingToken(pass string) []byte {
-	return pbkdf2.Key(norm.NFKD.Bytes([]byte(pass)), norm.NFKD.Bytes([]byte(pairingTokenSalt)), 50000, 32, sha256.New)
+	return pbkdf2.Key(norm.NFKD.Bytes([]byte(pass)), norm.NFKD.Bytes([]byte(crypto.PairingTokenSalt)), 50000, 32, sha256.New)
 }
