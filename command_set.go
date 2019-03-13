@@ -50,6 +50,7 @@ func (cs *CommandSet) Select() error {
 	cmd.SetLe(0)
 	resp, err := cs.c.Send(cmd)
 	if err = cs.checkOK(resp, err); err != nil {
+		cs.ApplicationInfo = &types.ApplicationInfo{}
 		return err
 	}
 
