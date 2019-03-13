@@ -3,7 +3,6 @@ package keycard
 import (
 	"bytes"
 	"crypto/rand"
-	"crypto/sha256"
 	"errors"
 	"fmt"
 
@@ -17,48 +16,6 @@ var (
 	ErrWrongApplicationInfoTemplate      = errors.New("wrong application info template")
 	ErrApplicationStatusTemplateNotFound = errors.New("application status template not found")
 )
-
-func Pair(c types.Channel, pairingPass string) (*types.PairingInfo, error) {
-	challenge := make([]byte, 32)
-	if _, err := rand.Read(challenge); err != nil {
-		return nil, err
-	}
-
-	cmd := NewCommandPairFirstStep(challenge)
-	resp, err := c.Send(cmd)
-	if err = checkOKResponse(err, resp); err != nil {
-		return nil, err
-	}
-
-	cardCryptogram := resp.Data[:32]
-	cardChallenge := resp.Data[32:]
-
-	secretHash, err := crypto.VerifyCryptogram(challenge, pairingPass, cardCryptogram)
-	if err != nil {
-		return nil, err
-	}
-
-	h := sha256.New()
-	h.Write(secretHash[:])
-	h.Write(cardChallenge)
-	cmd = NewCommandPairFinalStep(h.Sum(nil))
-	resp, err = c.Send(cmd)
-	if err = checkOKResponse(err, resp); err != nil {
-		return nil, err
-	}
-
-	h.Reset()
-	h.Write(secretHash[:])
-	h.Write(resp.Data[1:])
-
-	pairingKey := h.Sum(nil)
-	pairingIndex := resp.Data[0]
-
-	return &types.PairingInfo{
-		Key:   pairingKey,
-		Index: int(pairingIndex),
-	}, nil
-}
 
 func OpenSecureChannel(c types.Channel, appInfo *types.ApplicationInfo, pairingIndex uint8, pairingKey []byte) (*SecureChannel, error) {
 	sc := NewSecureChannel(c)
