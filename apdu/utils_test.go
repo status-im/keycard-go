@@ -1,6 +1,7 @@
 package apdu
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/status-im/keycard-go/hexutils"
@@ -40,6 +41,61 @@ func TestFindTag(t *testing.T) {
 	data = hexutils.HexToBytes("C1 02 C2 00")
 	_, err = FindTag(data, uint8(0xC1), uint8(0xC3))
 	assert.Equal(t, &ErrTagNotFound{uint8(0xC3)}, err)
+}
+
+func TestParseLength(t *testing.T) {
+	scenarios := []struct {
+		data           []byte
+		expectedLength uint32
+		err            error
+	}{
+		{
+			data:           []byte{0x01, 0xAA},
+			expectedLength: 1,
+			err:            nil,
+		},
+		{
+			data:           []byte{0x7F, 0xAA},
+			expectedLength: 127,
+			err:            nil,
+		},
+		{
+			data:           []byte{0x81, 0x80, 0xAA},
+			expectedLength: 128,
+			err:            nil,
+		},
+		{
+			data:           []byte{0x82, 0x80, 0x80, 0xAA},
+			expectedLength: 32896,
+			err:            nil,
+		},
+		{
+			data:           []byte{0x83, 0x80, 0x80, 0x80, 0xAA},
+			expectedLength: 8421504,
+			err:            nil,
+		},
+		{
+			data:           []byte{0x80, 0xAA},
+			expectedLength: 0,
+			err:            ErrUnsupportedLenth80,
+		},
+		{
+			data:           []byte{0x84, 0xAA},
+			expectedLength: 0,
+			err:            ErrLengthTooBig,
+		},
+	}
+
+	for _, s := range scenarios {
+		buf := bytes.NewBuffer(s.data)
+		length, _, err := parseLength(buf)
+		if s.err == nil {
+			assert.NoError(t, err)
+			assert.Equal(t, s.expectedLength, length)
+		} else {
+			assert.Equal(t, s.err, err)
+		}
+	}
 }
 
 func TestFindTagN(t *testing.T) {

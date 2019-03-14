@@ -2,8 +2,15 @@ package apdu
 
 import (
 	"bytes"
+	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
+)
+
+var (
+	ErrUnsupportedLenth80 = errors.New("length cannot be 0x80")
+	ErrLengthTooBig       = errors.New("length cannot be more than 3 bytes")
 )
 
 // ErrTagNotFound is an error returned if a tag is not found in a TLV sequence.
@@ -36,7 +43,7 @@ func findTag(raw []byte, occurrence int, tags ...uint8) ([]byte, error) {
 
 	var (
 		tag    uint8
-		length uint8
+		length uint32
 		err    error
 	)
 
@@ -49,11 +56,7 @@ func findTag(raw []byte, occurrence int, tags ...uint8) ([]byte, error) {
 			return nil, err
 		}
 
-		length, err = buf.ReadByte()
-		if err != nil {
-			return nil, err
-		}
-
+		length, buf, err = parseLength(buf)
 		data := make([]byte, length)
 		if length != 0 {
 			_, err = buf.Read(data)
@@ -76,4 +79,35 @@ func findTag(raw []byte, occurrence int, tags ...uint8) ([]byte, error) {
 			return findTag(data, occurrence, tags[1:]...)
 		}
 	}
+}
+
+func parseLength(buf *bytes.Buffer) (uint32, *bytes.Buffer, error) {
+	length, err := buf.ReadByte()
+	if err != nil {
+		return 0, nil, err
+	}
+
+	if length == 0x80 {
+		return 0, nil, ErrUnsupportedLenth80
+	}
+
+	if length > 0x80 {
+		lengthSize := length - 0x80
+		if lengthSize > 3 {
+			return 0, nil, ErrLengthTooBig
+		}
+
+		data := make([]byte, lengthSize)
+		_, err = buf.Read(data)
+		if err != nil {
+			return 0, nil, err
+		}
+
+		num := make([]byte, 4)
+		copy(num[4-lengthSize:], data)
+
+		return binary.BigEndian.Uint32(num), buf, nil
+	}
+
+	return uint32(length), buf, nil
 }
