@@ -75,10 +75,9 @@ func (cs *CommandSet) DeleteKeycardInstancesAndPackage() error {
 		identifiers.PackageAID,
 	}
 
-	for _, id := range ids {
-		cmd := NewCommandDelete(id)
-		resp, err := cs.sc.Send(cmd)
-		if cs.checkOK(resp, err, SwOK, SwReferencedDataNotFound) != nil {
+	for _, aid := range ids {
+		err := cs.Delete(aid)
+		if err != nil {
 			return err
 		}
 	}
@@ -86,12 +85,22 @@ func (cs *CommandSet) DeleteKeycardInstancesAndPackage() error {
 	return nil
 }
 
+func (cs *CommandSet) Delete(aid []byte) error {
+	cmd := NewCommandDelete(aid)
+	resp, err := cs.sc.Send(cmd)
+	return cs.checkOK(resp, err, SwOK, SwReferencedDataNotFound)
+}
+
 func (cs *CommandSet) LoadKeycardPackage(capFile *os.File, callback LoadingCallback) error {
+	return cs.LoadPackage(capFile, identifiers.PackageAID, callback)
+}
+
+func (cs *CommandSet) LoadPackage(capFile *os.File, pkgAID []byte, callback LoadingCallback) error {
 	if cs.sc == nil {
 		return ErrSecureChannelNotOpen
 	}
 
-	preLoad := NewCommandInstallForLoad(identifiers.PackageAID, []byte{})
+	preLoad := NewCommandInstallForLoad(pkgAID, []byte{})
 	resp, err := cs.sc.Send(preLoad)
 	if err = cs.checkOK(resp, err); err != nil {
 		return err
@@ -115,7 +124,7 @@ func (cs *CommandSet) LoadKeycardPackage(capFile *os.File, callback LoadingCallb
 }
 
 func (cs *CommandSet) InstallNDEFApplet(ndefRecord []byte) error {
-	return cs.installForInstall(
+	return cs.InstallForInstall(
 		identifiers.PackageAID,
 		identifiers.NdefAID,
 		identifiers.NdefInstanceAID,
@@ -128,14 +137,14 @@ func (cs *CommandSet) InstallKeycardApplet() error {
 		return err
 	}
 
-	return cs.installForInstall(
+	return cs.InstallForInstall(
 		identifiers.PackageAID,
 		identifiers.KeycardAID,
 		instanceAID,
 		[]byte{})
 }
 
-func (cs *CommandSet) installForInstall(packageAID, appletAID, instanceAID, params []byte) error {
+func (cs *CommandSet) InstallForInstall(packageAID, appletAID, instanceAID, params []byte) error {
 	cmd := NewCommandInstallForInstall(packageAID, appletAID, instanceAID, params)
 	resp, err := cs.sc.Send(cmd)
 	return cs.checkOK(resp, err)
