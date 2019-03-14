@@ -57,6 +57,10 @@ func findTag(raw []byte, occurrence int, tags ...uint8) ([]byte, error) {
 		}
 
 		length, buf, err = parseLength(buf)
+		if err != nil {
+			return nil, err
+		}
+
 		data := make([]byte, length)
 		if length != 0 {
 			_, err = buf.Read(data)

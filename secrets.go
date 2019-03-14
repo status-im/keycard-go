@@ -25,8 +25,16 @@ type Secrets struct {
 	pairingToken []byte
 }
 
-// NewSecrets generate a new Secrets with  random puk and pairing password.
-func NewSecrets() (*Secrets, error) {
+func NewSecrets(pin, puk, pairingPass string) *Secrets {
+	return &Secrets{
+		pin:         pin,
+		puk:         puk,
+		pairingPass: pairingPass,
+	}
+}
+
+// GenerateSecrets generate a new Secrets with  random puk and pairing password.
+func GenerateSecrets() (*Secrets, error) {
 	pairingPass, err := generatePairingPass()
 	if err != nil {
 		return nil, err
