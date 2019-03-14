@@ -11,6 +11,8 @@ const (
 	InsMutuallyAuthenticate = uint8(0x11)
 	InsPair                 = uint8(0x12)
 	InsGetStatus            = uint8(0xF2)
+	InsGenerateKey          = uint8(0xD4)
+	InsVerifyPIN            = uint8(0x20)
 
 	P1PairingFirstStep     = uint8(0x00)
 	P1PairingFinalStep     = uint8(0x01)
@@ -84,4 +86,24 @@ func NewCommandGetStatusApplication() *apdu.Command {
 
 func NewCommandGetStatusKeyPath() *apdu.Command {
 	return NewCommandGetStatus(P1GetStatusKeyPath)
+}
+
+func NewCommandGenerateKey() *apdu.Command {
+	return apdu.NewCommand(
+		globalplatform.ClaGp,
+		InsGenerateKey,
+		uint8(0),
+		uint8(0),
+		[]byte{},
+	)
+}
+
+func NewCommandVerifyPIN(pin string) *apdu.Command {
+	return apdu.NewCommand(
+		globalplatform.ClaGp,
+		InsVerifyPIN,
+		uint8(0),
+		uint8(0),
+		[]byte(pin),
+	)
 }

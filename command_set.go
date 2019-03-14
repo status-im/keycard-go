@@ -161,6 +161,23 @@ func (cs *CommandSet) GetStatus() (*types.ApplicationStatus, error) {
 	return types.ParseApplicationStatus(resp.Data)
 }
 
+func (cs *CommandSet) VerifyPIN(pin string) error {
+	cmd := NewCommandVerifyPIN(pin)
+	resp, err := cs.sc.Send(cmd)
+
+	return cs.checkOK(resp, err)
+}
+
+func (cs *CommandSet) GenerateKey() ([]byte, error) {
+	cmd := NewCommandGenerateKey()
+	resp, err := cs.sc.Send(cmd)
+	if err = cs.checkOK(resp, err); err != nil {
+		return nil, err
+	}
+
+	return resp.Data, nil
+}
+
 func (cs *CommandSet) mutualAuthenticate() error {
 	data := make([]byte, 32)
 	if _, err := rand.Read(data); err != nil {
