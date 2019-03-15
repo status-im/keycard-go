@@ -178,6 +178,30 @@ func (cs *CommandSet) GenerateKey() ([]byte, error) {
 	return resp.Data, nil
 }
 
+func (cs *CommandSet) DeriveKey(path string) error {
+	cmd, err := NewCommandDeriveKey(path)
+	if err != nil {
+		return err
+	}
+
+	resp, err := cs.sc.Send(cmd)
+	return cs.checkOK(resp, err)
+}
+
+func (cs *CommandSet) Sign(data []byte) (*types.Signature, error) {
+	cmd, err := NewCommandSign(data)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := cs.sc.Send(cmd)
+	if err = cs.checkOK(resp, err); err != nil {
+		return nil, err
+	}
+
+	return types.ParseSignature(resp.Data)
+}
+
 func (cs *CommandSet) mutualAuthenticate() error {
 	data := make([]byte, 32)
 	if _, err := rand.Read(data); err != nil {
