@@ -199,7 +199,7 @@ func (cs *CommandSet) Sign(data []byte) (*types.Signature, error) {
 		return nil, err
 	}
 
-	return types.ParseSignature(resp.Data)
+	return types.ParseSignature(data, resp.Data)
 }
 
 func (cs *CommandSet) mutualAuthenticate() error {
