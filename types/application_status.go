@@ -2,10 +2,15 @@ package types
 
 import (
 	"bytes"
+	"encoding/binary"
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/status-im/keycard-go/apdu"
 )
+
+const hardenedStart = 0x80000000 // 2^31
 
 var ErrApplicationStatusTemplateNotFound = errors.New("application status template not found")
 
@@ -13,15 +18,16 @@ type ApplicationStatus struct {
 	PinRetryCount  int
 	PUKRetryCount  int
 	KeyInitialized bool
+	Path           string
 }
 
 func ParseApplicationStatus(data []byte) (*ApplicationStatus, error) {
-	appStatus := &ApplicationStatus{}
-
 	tpl, err := apdu.FindTag(data, TagApplicationStatusTemplate)
 	if err != nil {
-		return nil, ErrApplicationStatusTemplateNotFound
+		return parseKeyPathStatus(data)
 	}
+
+	appStatus := &ApplicationStatus{}
 
 	if pinRetryCount, err := apdu.FindTag(tpl, uint8(0x02)); err == nil && len(pinRetryCount) == 1 {
 		appStatus.PinRetryCount = int(pinRetryCount[0])
@@ -36,6 +42,30 @@ func ParseApplicationStatus(data []byte) (*ApplicationStatus, error) {
 			appStatus.KeyInitialized = true
 		}
 	}
+
+	return appStatus, nil
+}
+
+func parseKeyPathStatus(data []byte) (*ApplicationStatus, error) {
+	appStatus := &ApplicationStatus{}
+	buf := bytes.NewBuffer(data)
+	rawPath := make([]uint32, buf.Len()/4)
+	err := binary.Read(buf, binary.BigEndian, &rawPath)
+	if err != nil {
+		return nil, err
+	}
+
+	segments := []string{"m"}
+	for _, i := range rawPath {
+		suffix := ""
+		if i >= hardenedStart {
+			i = i - hardenedStart
+			suffix = "'"
+		}
+		segments = append(segments, fmt.Sprintf("%d%s", i, suffix))
+	}
+
+	appStatus.Path = strings.Join(segments, "/")
 
 	return appStatus, nil
 }

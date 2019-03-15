@@ -90,14 +90,6 @@ func NewCommandGetStatus(p1 uint8) *apdu.Command {
 	)
 }
 
-func NewCommandGetStatusApplication() *apdu.Command {
-	return NewCommandGetStatus(P1GetStatusApplication)
-}
-
-func NewCommandGetStatusKeyPath() *apdu.Command {
-	return NewCommandGetStatus(P1GetStatusKeyPath)
-}
-
 func NewCommandGenerateKey() *apdu.Command {
 	return apdu.NewCommand(
 		globalplatform.ClaGp,

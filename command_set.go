@@ -151,14 +151,22 @@ func (cs *CommandSet) OpenSecureChannel() error {
 	return nil
 }
 
-func (cs *CommandSet) GetStatus() (*types.ApplicationStatus, error) {
-	cmd := NewCommandGetStatusApplication()
+func (cs *CommandSet) GetStatus(info uint8) (*types.ApplicationStatus, error) {
+	cmd := NewCommandGetStatus(info)
 	resp, err := cs.sc.Send(cmd)
 	if err = cs.checkOK(resp, err); err != nil {
 		return nil, err
 	}
 
 	return types.ParseApplicationStatus(resp.Data)
+}
+
+func (cs *CommandSet) GetStatusApplication() (*types.ApplicationStatus, error) {
+	return cs.GetStatus(P1GetStatusApplication)
+}
+
+func (cs *CommandSet) GetStatusKeyPath() (*types.ApplicationStatus, error) {
+	return cs.GetStatus(P1GetStatusKeyPath)
 }
 
 func (cs *CommandSet) VerifyPIN(pin string) error {
