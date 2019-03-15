@@ -2,12 +2,10 @@ package types
 
 import (
 	"bytes"
-	"encoding/binary"
 	"errors"
-	"fmt"
-	"strings"
 
 	"github.com/status-im/keycard-go/apdu"
+	"github.com/status-im/keycard-go/derivationpath"
 )
 
 const hardenedStart = 0x80000000 // 2^31
@@ -48,24 +46,13 @@ func ParseApplicationStatus(data []byte) (*ApplicationStatus, error) {
 
 func parseKeyPathStatus(data []byte) (*ApplicationStatus, error) {
 	appStatus := &ApplicationStatus{}
-	buf := bytes.NewBuffer(data)
-	rawPath := make([]uint32, buf.Len()/4)
-	err := binary.Read(buf, binary.BigEndian, &rawPath)
+
+	path, err := derivationpath.EncodeFromBytes(data)
 	if err != nil {
 		return nil, err
 	}
 
-	segments := []string{"m"}
-	for _, i := range rawPath {
-		suffix := ""
-		if i >= hardenedStart {
-			i = i - hardenedStart
-			suffix = "'"
-		}
-		segments = append(segments, fmt.Sprintf("%d%s", i, suffix))
-	}
-
-	appStatus.Path = strings.Join(segments, "/")
+	appStatus.Path = path
 
 	return appStatus, nil
 }
