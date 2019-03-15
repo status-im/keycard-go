@@ -30,12 +30,12 @@ const (
 )
 
 type ApplicationInfo struct {
-	Installed      bool
-	Initialized    bool
-	InstanceUID    []byte
-	PublicKey      []byte
-	Version        []byte
-	AvailableSlots []byte
+	Installed              bool
+	Initialized            bool
+	InstanceUID            []byte
+	SecureChannelPublicKey []byte
+	Version                []byte
+	AvailableSlots         []byte
 	// KeyUID is the sha256 of of the master public key on the card.
 	// It's empty if the card doesn't contain any key.
 	KeyUID       []byte
@@ -68,10 +68,10 @@ func ParseApplicationInfo(data []byte) (*ApplicationInfo, error) {
 	}
 
 	if data[0] == TagSelectResponsePreInitialized {
-		info.PublicKey = data[2:]
+		info.SecureChannelPublicKey = data[2:]
 		info.Capabilities = CapabilityCredentialsManagement
 
-		if len(info.PublicKey) > 0 {
+		if len(info.SecureChannelPublicKey) > 0 {
 			info.Capabilities = info.Capabilities | CapabilitySecureChannel
 		}
 
@@ -116,7 +116,7 @@ func ParseApplicationInfo(data []byte) (*ApplicationInfo, error) {
 	}
 
 	info.InstanceUID = instanceUID
-	info.PublicKey = pubKey
+	info.SecureChannelPublicKey = pubKey
 	info.Version = appVersion
 	info.AvailableSlots = availableSlots
 	info.KeyUID = keyUID

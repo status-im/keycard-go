@@ -62,7 +62,7 @@ func (cs *CommandSet) Select() error {
 	cs.ApplicationInfo = appInfo
 
 	if cs.ApplicationInfo.HasSecureChannelCapability() {
-		err = cs.sc.GenerateSecret(cs.ApplicationInfo.PublicKey)
+		err = cs.sc.GenerateSecret(cs.ApplicationInfo.SecureChannelPublicKey)
 		if err != nil {
 			return err
 		}
