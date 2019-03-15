@@ -10,10 +10,9 @@ import (
 var ErrApplicationStatusTemplateNotFound = errors.New("application status template not found")
 
 type ApplicationStatus struct {
-	PinRetryCount    int
-	PUKRetryCount    int
-	KeyInitialized   bool
-	PubKeyDerivation bool
+	PinRetryCount  int
+	PUKRetryCount  int
+	KeyInitialized bool
 }
 
 func ParseApplicationStatus(data []byte) (*ApplicationStatus, error) {
@@ -35,12 +34,6 @@ func ParseApplicationStatus(data []byte) (*ApplicationStatus, error) {
 	if keyInitialized, err := apdu.FindTag(tpl, uint8(0x01)); err == nil {
 		if bytes.Equal(keyInitialized, []byte{0xFF}) {
 			appStatus.KeyInitialized = true
-		}
-	}
-
-	if keyDerivationSupported, err := apdu.FindTagN(tpl, 1, uint8(0x01)); err == nil {
-		if bytes.Equal(keyDerivationSupported, []byte{0xFF}) {
-			appStatus.PubKeyDerivation = true
 		}
 	}
 
