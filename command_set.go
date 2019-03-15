@@ -215,6 +215,10 @@ func (cs *CommandSet) mutualAuthenticate() error {
 }
 
 func (cs *CommandSet) checkOK(resp *apdu.Response, err error, allowedResponses ...uint16) error {
+	if err != nil {
+		return err
+	}
+
 	if len(allowedResponses) == 0 {
 		allowedResponses = []uint16{apdu.SwOK}
 	}
