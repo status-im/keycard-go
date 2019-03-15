@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestParse(t *testing.T) {
+func TestDecode(t *testing.T) {
 	scenarios := []struct {
 		path                  string
 		expectedPath          []uint32
@@ -73,7 +73,7 @@ func TestParse(t *testing.T) {
 
 	for i, s := range scenarios {
 		t.Run(fmt.Sprintf("scenario %d", i), func(t *testing.T) {
-			startingPoint, path, err := Parse(s.path)
+			startingPoint, path, err := Decode(s.path)
 			if s.err == nil {
 				assert.NoError(t, err)
 				assert.Equal(t, s.expectedStartingPoint, startingPoint)

@@ -111,7 +111,7 @@ func NewCommandVerifyPIN(pin string) *apdu.Command {
 }
 
 func NewCommandDeriveKey(pathStr string) (*apdu.Command, error) {
-	startingPoint, path, err := derivationpath.Parse(pathStr)
+	startingPoint, path, err := derivationpath.Decode(pathStr)
 	if err != nil {
 		return nil, err
 	}
