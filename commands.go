@@ -20,6 +20,7 @@ const (
 	InsVerifyPIN            = uint8(0x20)
 	InsDeriveKey            = uint8(0xD1)
 	InsSign                 = uint8(0xC0)
+	InsSetPinlessPath       = uint8(0xC1)
 
 	P1PairingFirstStep     = uint8(0x00)
 	P1PairingFinalStep     = uint8(0x01)
@@ -139,6 +140,32 @@ func NewCommandDeriveKey(pathStr string) (*apdu.Command, error) {
 		globalplatform.ClaGp,
 		InsDeriveKey,
 		p1,
+		uint8(0),
+		data.Bytes(),
+	), nil
+}
+
+func NewCommandSetPinlessPath(pathStr string) (*apdu.Command, error) {
+	startingPoint, path, err := derivationpath.Decode(pathStr)
+	if err != nil {
+		return nil, err
+	}
+
+	if startingPoint != derivationpath.StartingPointMaster {
+		return nil, fmt.Errorf("pinless path must be set with an absolute path")
+	}
+
+	data := new(bytes.Buffer)
+	for _, segment := range path {
+		if err := binary.Write(data, binary.BigEndian, segment); err != nil {
+			return nil, err
+		}
+	}
+
+	return apdu.NewCommand(
+		globalplatform.ClaGp,
+		InsSetPinlessPath,
+		uint8(0),
 		uint8(0),
 		data.Bytes(),
 	), nil

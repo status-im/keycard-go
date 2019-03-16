@@ -196,6 +196,16 @@ func (cs *CommandSet) DeriveKey(path string) error {
 	return cs.checkOK(resp, err)
 }
 
+func (cs *CommandSet) SetPinlessPath(path string) error {
+	cmd, err := NewCommandDeriveKey(path)
+	if err != nil {
+		return err
+	}
+
+	resp, err := cs.sc.Send(cmd)
+	return cs.checkOK(resp, err)
+}
+
 func (cs *CommandSet) Sign(data []byte) (*types.Signature, error) {
 	cmd, err := NewCommandSign(data)
 	if err != nil {
