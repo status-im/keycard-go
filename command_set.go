@@ -195,6 +195,21 @@ func (cs *CommandSet) ChangePIN(pin string) error {
 	return cs.checkOK(resp, err)
 }
 
+func (cs *CommandSet) ChangePUK(puk string) error {
+	cmd := NewCommandChangePUK(puk)
+	resp, err := cs.sc.Send(cmd)
+
+	return cs.checkOK(resp, err)
+}
+
+func (cs *CommandSet) ChangePairingSecret(password string) error {
+	secret := generatePairingToken(password)
+	cmd := NewCommandChangePairingSecret(secret)
+	resp, err := cs.sc.Send(cmd)
+
+	return cs.checkOK(resp, err)
+}
+
 func (cs *CommandSet) GenerateKey() ([]byte, error) {
 	cmd := NewCommandGenerateKey()
 	resp, err := cs.sc.Send(cmd)

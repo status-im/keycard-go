@@ -149,6 +149,26 @@ func NewCommandChangePIN(pin string) *apdu.Command {
 	)
 }
 
+func NewCommandChangePUK(puk string) *apdu.Command {
+	return apdu.NewCommand(
+		globalplatform.ClaGp,
+		InsChangePIN,
+		P1ChangePinPUK,
+		uint8(0),
+		[]byte(puk),
+	)
+}
+
+func NewCommandChangePairingSecret(secret []byte) *apdu.Command {
+	return apdu.NewCommand(
+		globalplatform.ClaGp,
+		InsChangePIN,
+		P1ChangePinPairingSecret,
+		uint8(0),
+		secret,
+	)
+}
+
 func NewCommandDeriveKey(pathStr string) (*apdu.Command, error) {
 	startingPoint, path, err := derivationpath.Decode(pathStr)
 	if err != nil {
