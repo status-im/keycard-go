@@ -186,6 +186,12 @@ func (cs *CommandSet) GenerateKey() ([]byte, error) {
 	return resp.Data, nil
 }
 
+func (cs *CommandSet) RemoveKey() error {
+	cmd := NewCommandRemoveKey()
+	resp, err := cs.sc.Send(cmd)
+	return cs.checkOK(resp, err)
+}
+
 func (cs *CommandSet) DeriveKey(path string) error {
 	cmd, err := NewCommandDeriveKey(path)
 	if err != nil {

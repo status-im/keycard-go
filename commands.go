@@ -17,6 +17,7 @@ const (
 	InsPair                 = uint8(0x12)
 	InsGetStatus            = uint8(0xF2)
 	InsGenerateKey          = uint8(0xD4)
+	InsRemoveKey            = uint8(0xD3)
 	InsVerifyPIN            = uint8(0x20)
 	InsDeriveKey            = uint8(0xD1)
 	InsSign                 = uint8(0xC0)
@@ -95,6 +96,16 @@ func NewCommandGenerateKey() *apdu.Command {
 	return apdu.NewCommand(
 		globalplatform.ClaGp,
 		InsGenerateKey,
+		uint8(0),
+		uint8(0),
+		[]byte{},
+	)
+}
+
+func NewCommandRemoveKey() *apdu.Command {
+	return apdu.NewCommand(
+		globalplatform.ClaGp,
+		InsRemoveKey,
 		uint8(0),
 		uint8(0),
 		[]byte{},
