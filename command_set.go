@@ -12,6 +12,8 @@ import (
 	"github.com/status-im/keycard-go/types"
 )
 
+var ErrNoAvailablePairingSlots = errors.New("no available pairing slots")
+
 type CommandSet struct {
 	c               types.Channel
 	sc              *SecureChannel
@@ -93,6 +95,10 @@ func (cs *CommandSet) Pair(pairingPass string) error {
 
 	cmd := NewCommandPairFirstStep(challenge)
 	resp, err := cs.c.Send(cmd)
+	if resp.Sw == SwNoAvailablePairingSlots {
+		return ErrNoAvailablePairingSlots
+	}
+
 	if err = cs.checkOK(resp, err); err != nil {
 		return err
 	}
