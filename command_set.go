@@ -188,6 +188,13 @@ func (cs *CommandSet) VerifyPIN(pin string) error {
 	return cs.checkOK(resp, err)
 }
 
+func (cs *CommandSet) ChangePIN(pin string) error {
+	cmd := NewCommandChangePIN(pin)
+	resp, err := cs.sc.Send(cmd)
+
+	return cs.checkOK(resp, err)
+}
+
 func (cs *CommandSet) GenerateKey() ([]byte, error) {
 	cmd := NewCommandGenerateKey()
 	resp, err := cs.sc.Send(cmd)

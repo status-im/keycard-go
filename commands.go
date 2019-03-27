@@ -20,17 +20,21 @@ const (
 	InsGenerateKey          = uint8(0xD4)
 	InsRemoveKey            = uint8(0xD3)
 	InsVerifyPIN            = uint8(0x20)
+	InsChangePIN            = uint8(0x21)
 	InsDeriveKey            = uint8(0xD1)
 	InsSign                 = uint8(0xC0)
 	InsSetPinlessPath       = uint8(0xC1)
 
-	P1PairingFirstStep     = uint8(0x00)
-	P1PairingFinalStep     = uint8(0x01)
-	P1GetStatusApplication = uint8(0x00)
-	P1GetStatusKeyPath     = uint8(0x01)
-	P1DeriveKeyFromMaster  = uint8(0x00)
-	P1DeriveKeyFromParent  = uint8(0x01)
-	P1DeriveKeyFromCurrent = uint8(0x10)
+	P1PairingFirstStep       = uint8(0x00)
+	P1PairingFinalStep       = uint8(0x01)
+	P1GetStatusApplication   = uint8(0x00)
+	P1GetStatusKeyPath       = uint8(0x01)
+	P1DeriveKeyFromMaster    = uint8(0x00)
+	P1DeriveKeyFromParent    = uint8(0x01)
+	P1DeriveKeyFromCurrent   = uint8(0x10)
+	P1ChangePinPIN           = uint8(0x00)
+	P1ChangePinPUK           = uint8(0x01)
+	P1ChangePinPairingSecret = uint8(0x02)
 
 	SwNoAvailablePairingSlots = 0x6A84
 )
@@ -130,6 +134,16 @@ func NewCommandVerifyPIN(pin string) *apdu.Command {
 		globalplatform.ClaGp,
 		InsVerifyPIN,
 		uint8(0),
+		uint8(0),
+		[]byte(pin),
+	)
+}
+
+func NewCommandChangePIN(pin string) *apdu.Command {
+	return apdu.NewCommand(
+		globalplatform.ClaGp,
+		InsChangePIN,
+		P1ChangePinPIN,
 		uint8(0),
 		[]byte(pin),
 	)
