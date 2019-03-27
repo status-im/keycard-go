@@ -15,6 +15,7 @@ const (
 	InsOpenSecureChannel    = uint8(0x10)
 	InsMutuallyAuthenticate = uint8(0x11)
 	InsPair                 = uint8(0x12)
+	InsUnpair               = uint8(0x13)
 	InsGetStatus            = uint8(0xF2)
 	InsGenerateKey          = uint8(0xD4)
 	InsRemoveKey            = uint8(0xD3)
@@ -30,6 +31,8 @@ const (
 	P1DeriveKeyFromMaster  = uint8(0x00)
 	P1DeriveKeyFromParent  = uint8(0x01)
 	P1DeriveKeyFromCurrent = uint8(0x10)
+
+	SwNoAvailablePairingSlots = 0x6A84
 )
 
 func NewCommandInit(data []byte) *apdu.Command {
@@ -59,6 +62,16 @@ func NewCommandPairFinalStep(cryptogramHash []byte) *apdu.Command {
 		P1PairingFinalStep,
 		uint8(0x00),
 		cryptogramHash,
+	)
+}
+
+func NewCommandUnpair(index uint8) *apdu.Command {
+	return apdu.NewCommand(
+		globalplatform.ClaGp,
+		InsUnpair,
+		index,
+		uint8(0),
+		[]byte{},
 	)
 }
 

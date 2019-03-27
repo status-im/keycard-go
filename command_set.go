@@ -135,6 +135,12 @@ func (cs *CommandSet) Pair(pairingPass string) error {
 	return nil
 }
 
+func (cs *CommandSet) Unpair(index uint8) error {
+	cmd := NewCommandUnpair(index)
+	resp, err := cs.sc.Send(cmd)
+	return cs.checkOK(resp, err)
+}
+
 func (cs *CommandSet) OpenSecureChannel() error {
 	if cs.ApplicationInfo == nil {
 		return errors.New("cannot open secure channel without setting PairingInfo")
