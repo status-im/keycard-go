@@ -15,7 +15,7 @@ If you only need a tool to initialize your card, check out [keycard-cli](https:/
 - [x] GET STATUS
 - [ ] SET NDEF
 - [x] VERIFY PIN
-- [ ] CHANGE PIN
+- [x] CHANGE PIN
 - [ ] UNBLOCK PIN
 - [ ] LOAD KEY
 - [x] DERIVE KEY
