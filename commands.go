@@ -22,6 +22,7 @@ const (
 	InsVerifyPIN            = 0x20
 	InsChangePIN            = 0x21
 	InsDeriveKey            = 0xD1
+	InsExportKey            = 0xC2
 	InsSign                 = 0xC0
 	InsSetPinlessPath       = 0xC1
 
@@ -203,6 +204,41 @@ func NewCommandDeriveKey(pathStr string) (*apdu.Command, error) {
 		InsDeriveKey,
 		p1,
 		0,
+		data.Bytes(),
+	), nil
+}
+
+// Export a key
+//	@param {p1}
+//		0x00: current key - returns the key that is currently loaded and ready for signing. Does not use derivation path
+//		0x01: derive - returns derived key
+//		0x02: derive and make current - returns derived key and also sets it to the current key
+//  @param {p2}
+//		0x00: return public and private key pair
+//		0x01: return only the public key
+//  @param {pathStr}
+//		Derivation path of format "m/x/x/x/x/x", e.g. "m/44'/0'/0'/0/0"
+func NewCommandExportKey(p1 uint8, p2 uint8, pathStr string) (*apdu.Command, error) {
+	
+	// Choose to derive based on the value of p1
+	data := new(bytes.Buffer)
+	if (p1 == 0x01 || p1 == 0x02) {
+		_, path, err := derivationpath.Decode(pathStr)
+		if err != nil {
+			return nil, err
+		}
+		for _, segment := range path {
+			if err := binary.Write(data, binary.BigEndian, segment); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return apdu.NewCommand(
+		globalplatform.ClaGp,
+		InsExportKey,
+		p1,
+		p2,
 		data.Bytes(),
 	), nil
 }

@@ -229,6 +229,36 @@ func (cs *CommandSet) DeriveKey(path string) error {
 	return cs.checkOK(resp, err)
 }
 
+func (cs *CommandSet) ExportKey(derive bool, makeCurrent bool, onlyPublic bool, path string) ([]byte, error) {
+	var p1 uint8
+	if (derive == false) {
+		p1 = 0x00
+	} else if (makeCurrent == false) {
+		p1 = 0x01
+	} else {
+		p1 = 0x02
+	}
+	var p2 uint8
+	if (onlyPublic == true) {
+		p2 = 0x01
+	} else {
+		p2 = 0x00
+	}
+	cmd, err := NewCommandExportKey(p1, p2, path)
+	if err != nil {
+		return nil, err
+	}	
+
+	resp, err := cs.sc.Send(cmd)
+	// fmt.Printf("res.Data: %x\n", resp.Data)
+	err = cs.checkOK(resp, err)
+	if err != nil {
+		return nil, err
+	}
+	return resp.Data, nil
+
+}
+
 func (cs *CommandSet) SetPinlessPath(path string) error {
 	cmd, err := NewCommandSetPinlessPath(path)
 	if err != nil {
