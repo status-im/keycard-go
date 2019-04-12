@@ -209,15 +209,14 @@ func NewCommandDeriveKey(pathStr string) (*apdu.Command, error) {
 	), nil
 }
 
-func NewCommandLoadKey(isSeed bool, data []byte) (*apdu.Command) {
+func NewCommandLoadKey(isSeed bool, isExtended bool, data []byte) (*apdu.Command) {
 	var p1 uint8
 	if isSeed == true {
 		p1 = 0x03
+	} else if isExtended == true {
+		// isExtended indicates the user has included a chaincode
+		p1 = 0x02
 	} else {
-		// This assumes the user is sending a normal keypair, as opposed
-		// to an extended keypair
-		// Alex: This is because I've never heard of an "extended keypair"
-		//		Seeking clarification from Status
 		p1 = 0x01
 	}
 	return apdu.NewCommand(
