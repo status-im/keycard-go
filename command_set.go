@@ -220,6 +220,12 @@ func (cs *CommandSet) GenerateKey() ([]byte, error) {
 	return resp.Data, nil
 }
 
+func (cs *CommandSet) LoadKey(isSeed bool, data []byte) error {
+	cmd := NewCommandLoadKey(isSeed, data)
+	res, err := cs.sc.Send(cmd)
+	return cs.checkOK(res, err);
+}
+
 func (cs *CommandSet) RemoveKey() error {
 	cmd := NewCommandRemoveKey()
 	resp, err := cs.sc.Send(cmd)

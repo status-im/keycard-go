@@ -21,6 +21,7 @@ const (
 	InsRemoveKey            = 0xD3
 	InsVerifyPIN            = 0x20
 	InsChangePIN            = 0x21
+	InsLoadKey              = 0xD0
 	InsDeriveKey            = 0xD1
 	InsExportKey            = 0xC2
 	InsSign                 = 0xC0
@@ -206,6 +207,26 @@ func NewCommandDeriveKey(pathStr string) (*apdu.Command, error) {
 		0,
 		data.Bytes(),
 	), nil
+}
+
+func NewCommandLoadKey(isSeed bool, data []byte) (*apdu.Command) {
+	var p1 uint8
+	if isSeed == true {
+		p1 = 0x03
+	} else {
+		// This assumes the user is sending a normal keypair, as opposed
+		// to an extended keypair
+		// Alex: This is because I've never heard of an "extended keypair"
+		//		Seeking clarification from Status
+		p1 = 0x01
+	}
+	return apdu.NewCommand(
+		globalplatform.ClaGp,
+		InsLoadKey,
+		p1,
+		0,
+		data,
+	)
 }
 
 // Export a key
