@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-
 	"github.com/status-im/keycard-go/apdu"
 	"github.com/status-im/keycard-go/derivationpath"
 	"github.com/status-im/keycard-go/globalplatform"
+	"github.com/status-im/keycard-go/types"
 )
 
 const (
@@ -222,7 +222,7 @@ func NewCommandExportKey(p1 uint8, p2 uint8, pathStr string) (*apdu.Command, err
 	
 	// Choose to derive based on the value of p1
 	data := new(bytes.Buffer)
-	if (p1 == 0x01 || p1 == 0x02) {
+	if (p1 == types.EXPORT_KEY_DERIVE || p1 == types.EXPORT_KEY_DERIVE_AND_MAKE_CURRENT) {
 		_, path, err := derivationpath.Decode(pathStr)
 		if err != nil {
 			return nil, err
