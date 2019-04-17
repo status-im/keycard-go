@@ -43,7 +43,7 @@ type ErrInvalidLifeCycleValue struct {
 }
 
 func (e *ErrInvalidLifeCycleValue) Error() string {
-	return fmt.Sprintf("life cycle value must be 1 byte. got %d byte: %x", len(e.lc), e.lc)
+	return fmt.Sprintf("life cycle value must be 1 byte. got %d bytes: %x", len(e.lc), e.lc)
 }
 
 type CardStatus struct {
