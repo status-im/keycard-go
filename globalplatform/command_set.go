@@ -143,6 +143,14 @@ func (cs *CommandSet) InstallForInstall(packageAID, appletAID, instanceAID, para
 	return cs.checkOK(resp, err)
 }
 
+func (cs *CommandSet) Channel() types.Channel {
+	return cs.c
+}
+
+func (cs *CommandSet) SecureChannel() *SecureChannel {
+	return cs.sc
+}
+
 func (cs *CommandSet) initializeUpdate(hostChallenge []byte) error {
 	cmd := NewCommandInitializeUpdate(hostChallenge)
 	resp, err := cs.c.Send(cmd)
