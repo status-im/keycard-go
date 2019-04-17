@@ -143,6 +143,12 @@ func (cs *CommandSet) InstallForInstall(packageAID, appletAID, instanceAID, para
 	return cs.checkOK(resp, err)
 }
 
+func (cs *CommandSet) GetStatus() error {
+	cmd := NewCommandGetStatus([]byte{}, P1GetStatusIssuerSecurityDomain)
+	resp, err := cs.sc.Send(cmd)
+	return cs.checkOK(resp, err)
+}
+
 func (cs *CommandSet) Channel() types.Channel {
 	return cs.c
 }
