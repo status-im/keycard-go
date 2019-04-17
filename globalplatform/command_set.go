@@ -31,14 +31,7 @@ func (cs *CommandSet) Select() error {
 }
 
 func (cs *CommandSet) SelectAID(aid []byte) error {
-	cmd := apdu.NewCommand(
-		0x00,
-		InsSelect,
-		uint8(0x04),
-		uint8(0x00),
-		aid,
-	)
-
+	cmd := NewCommandSelect(aid)
 	cmd.SetLe(0)
 	resp, err := cs.c.Send(cmd)
 
