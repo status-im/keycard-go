@@ -283,6 +283,8 @@ func NewCommandSign(data []byte, p1 uint8) (*apdu.Command, error) {
 	), nil
 }
 
+// Internal function. Get the type of starting point for the derivation path.
+// Used for both DeriveKey and ExportKey
 func _getDeriveP1(s derivationpath.StartingPoint) (uint8, error) {
 	switch s {
 		case derivationpath.StartingPointMaster:
