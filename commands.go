@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-
 	"github.com/status-im/keycard-go/apdu"
 	"github.com/status-im/keycard-go/derivationpath"
 	"github.com/status-im/keycard-go/globalplatform"
@@ -22,6 +21,7 @@ const (
 	InsVerifyPIN            = 0x20
 	InsChangePIN            = 0x21
 	InsDeriveKey            = 0xD1
+	InsExportKey            = 0xC2
 	InsSign                 = 0xC0
 	InsSetPinlessPath       = 0xC1
 
@@ -41,6 +41,12 @@ const (
 	P1SignPinless              = 0x03
 
 	SwNoAvailablePairingSlots = 0x6A84
+
+	EXPORT_KEY_CURRENT                 = uint8(0x00)
+	EXPORT_KEY_DERIVE                  = uint8(0x01)
+	EXPORT_KEY_DERIVE_AND_MAKE_CURRENT = uint8(0x02)
+	EXPORT_KEY_PRIV_PUB                = uint8(0x00)
+	EXPORT_KEY_PUB                     = uint8(0x01)
 )
 
 func NewCommandInit(data []byte) *apdu.Command {
@@ -179,16 +185,9 @@ func NewCommandDeriveKey(pathStr string) (*apdu.Command, error) {
 		return nil, err
 	}
 
-	var p1 uint8
-	switch startingPoint {
-	case derivationpath.StartingPointMaster:
-		p1 = P1DeriveKeyFromMaster
-	case derivationpath.StartingPointParent:
-		p1 = P1DeriveKeyFromParent
-	case derivationpath.StartingPointCurrent:
-		p1 = P1DeriveKeyFromCurrent
-	default:
-		return nil, fmt.Errorf("invalid startingPoint %d", startingPoint)
+	p1, err := _getDeriveP1(startingPoint)
+	if err != nil {
+		return nil, err
 	}
 
 	data := new(bytes.Buffer)
@@ -203,6 +202,43 @@ func NewCommandDeriveKey(pathStr string) (*apdu.Command, error) {
 		InsDeriveKey,
 		p1,
 		0,
+		data.Bytes(),
+	), nil
+}
+
+// Export a key
+//	@param {p1}
+//		0x00: current key - returns the key that is currently loaded and ready for signing. Does not use derivation path
+//		0x01: derive - returns derived key
+//		0x02: derive and make current - returns derived key and also sets it to the current key
+//  @param {p2}
+//		0x00: return public and private key pair
+//		0x01: return only the public key
+//  @param {pathStr}
+//		Derivation path of format "m/x/x/x/x/x", e.g. "m/44'/0'/0'/0/0"
+func NewCommandExportKey(p1 uint8, p2 uint8, pathStr string) (*apdu.Command, error) {
+	startingPoint, path, err := derivationpath.Decode(pathStr)
+	if err != nil {
+		return nil, err
+	}
+
+	deriveP1, err := _getDeriveP1(startingPoint)
+	if err != nil {
+		return nil, err
+	}
+
+	data := new(bytes.Buffer)
+	for _, segment := range path {
+		if err := binary.Write(data, binary.BigEndian, segment); err != nil {
+			return nil, err
+		}
+	}
+
+	return apdu.NewCommand(
+		globalplatform.ClaGp,
+		InsExportKey,
+		p1 | deriveP1,
+		p2,
 		data.Bytes(),
 	), nil
 }
@@ -245,4 +281,19 @@ func NewCommandSign(data []byte, p1 uint8) (*apdu.Command, error) {
 		0,
 		data,
 	), nil
+}
+
+// Internal function. Get the type of starting point for the derivation path.
+// Used for both DeriveKey and ExportKey
+func _getDeriveP1(s derivationpath.StartingPoint) (uint8, error) {
+	switch s {
+		case derivationpath.StartingPointMaster:
+			return P1DeriveKeyFromMaster, nil
+		case derivationpath.StartingPointParent:
+			return P1DeriveKeyFromParent, nil
+		case derivationpath.StartingPointCurrent:
+			return P1DeriveKeyFromCurrent, nil
+		default:
+			return uint8(0), fmt.Errorf("invalid startingPoint %d", s)
+	}
 }
