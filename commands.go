@@ -27,28 +27,28 @@ const (
 	InsSign                 = 0xC0
 	InsSetPinlessPath       = 0xC1
 
-	P1PairingFirstStep         = 0x00
-	P1PairingFinalStep         = 0x01
-	P1GetStatusApplication     = 0x00
-	P1GetStatusKeyPath         = 0x01
-	P1DeriveKeyFromMaster      = 0x00
-	P1DeriveKeyFromParent      = 0x40
-	P1DeriveKeyFromCurrent     = 0x80
-	P1ChangePinPIN             = 0x00
-	P1ChangePinPUK             = 0x01
-	P1ChangePinPairingSecret   = 0x02
-	P1SignCurrentKey           = 0x00
-	P1SignDerive               = 0x01
-	P1SignDeriveAndMakeCurrent = 0x02
-	P1SignPinless              = 0x03
+	P1PairingFirstStep              = 0x00
+	P1PairingFinalStep              = 0x01
+	P1GetStatusApplication          = 0x00
+	P1GetStatusKeyPath              = 0x01
+	P1DeriveKeyFromMaster           = 0x00
+	P1DeriveKeyFromParent           = 0x40
+	P1DeriveKeyFromCurrent          = 0x80
+	P1ChangePinPIN                  = 0x00
+	P1ChangePinPUK                  = 0x01
+	P1ChangePinPairingSecret        = 0x02
+	P1SignCurrentKey                = 0x00
+	P1SignDerive                    = 0x01
+	P1SignDeriveAndMakeCurrent      = 0x02
+	P1SignPinless                   = 0x03
+	P1ExportKeyCurrent              = uint8(0x00)
+	P1ExportKeyDerive               = uint8(0x01)
+	P1ExportKeyDeriveAndMakeCurrent = uint8(0x02)
+
+	P2ExportKeyPrivateAndPublic = uint8(0x00)
+	P2ExportKeyPublicOnly       = uint8(0x01)
 
 	SwNoAvailablePairingSlots = 0x6A84
-
-	EXPORT_KEY_CURRENT                 = uint8(0x00)
-	EXPORT_KEY_DERIVE                  = uint8(0x01)
-	EXPORT_KEY_DERIVE_AND_MAKE_CURRENT = uint8(0x02)
-	EXPORT_KEY_PRIV_PUB                = uint8(0x00)
-	EXPORT_KEY_PUB                     = uint8(0x01)
 )
 
 func NewCommandInit(data []byte) *apdu.Command {
