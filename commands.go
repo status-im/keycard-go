@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+
 	"github.com/status-im/keycard-go/apdu"
 	"github.com/status-im/keycard-go/derivationpath"
 	"github.com/status-im/keycard-go/globalplatform"
@@ -185,7 +186,7 @@ func NewCommandDeriveKey(pathStr string) (*apdu.Command, error) {
 		return nil, err
 	}
 
-	p1, err := _getDeriveP1(startingPoint)
+	p1, err := derivationP1FromStartingPoint(startingPoint)
 	if err != nil {
 		return nil, err
 	}
@@ -222,7 +223,7 @@ func NewCommandExportKey(p1 uint8, p2 uint8, pathStr string) (*apdu.Command, err
 		return nil, err
 	}
 
-	deriveP1, err := _getDeriveP1(startingPoint)
+	deriveP1, err := derivationP1FromStartingPoint(startingPoint)
 	if err != nil {
 		return nil, err
 	}
@@ -237,7 +238,7 @@ func NewCommandExportKey(p1 uint8, p2 uint8, pathStr string) (*apdu.Command, err
 	return apdu.NewCommand(
 		globalplatform.ClaGp,
 		InsExportKey,
-		p1 | deriveP1,
+		p1|deriveP1,
 		p2,
 		data.Bytes(),
 	), nil
@@ -285,15 +286,15 @@ func NewCommandSign(data []byte, p1 uint8) (*apdu.Command, error) {
 
 // Internal function. Get the type of starting point for the derivation path.
 // Used for both DeriveKey and ExportKey
-func _getDeriveP1(s derivationpath.StartingPoint) (uint8, error) {
+func derivationP1FromStartingPoint(s derivationpath.StartingPoint) (uint8, error) {
 	switch s {
-		case derivationpath.StartingPointMaster:
-			return P1DeriveKeyFromMaster, nil
-		case derivationpath.StartingPointParent:
-			return P1DeriveKeyFromParent, nil
-		case derivationpath.StartingPointCurrent:
-			return P1DeriveKeyFromCurrent, nil
-		default:
-			return uint8(0), fmt.Errorf("invalid startingPoint %d", s)
+	case derivationpath.StartingPointMaster:
+		return P1DeriveKeyFromMaster, nil
+	case derivationpath.StartingPointParent:
+		return P1DeriveKeyFromParent, nil
+	case derivationpath.StartingPointCurrent:
+		return P1DeriveKeyFromCurrent, nil
+	default:
+		return uint8(0), fmt.Errorf("invalid startingPoint %d", s)
 	}
 }
