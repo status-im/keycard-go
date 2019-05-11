@@ -253,7 +253,7 @@ func (cs *CommandSet) ExportKey(derive bool, makeCurrent bool, onlyPublic bool, 
 	cmd, err := NewCommandExportKey(p1, p2, path)
 	if err != nil {
 		return nil, err
-	}
+	}	
 
 	resp, err := cs.sc.Send(cmd)
 	err = cs.checkOK(resp, err)
