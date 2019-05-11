@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+
 	"github.com/status-im/keycard-go/apdu"
 	"github.com/status-im/keycard-go/derivationpath"
 	"github.com/status-im/keycard-go/globalplatform"
@@ -20,33 +21,37 @@ const (
 	InsRemoveKey            = 0xD3
 	InsVerifyPIN            = 0x20
 	InsChangePIN            = 0x21
+	InsLoadKey              = 0xD0
 	InsDeriveKey            = 0xD1
 	InsExportKey            = 0xC2
 	InsSign                 = 0xC0
 	InsSetPinlessPath       = 0xC1
 
-	P1PairingFirstStep         = 0x00
-	P1PairingFinalStep         = 0x01
-	P1GetStatusApplication     = 0x00
-	P1GetStatusKeyPath         = 0x01
-	P1DeriveKeyFromMaster      = 0x00
-	P1DeriveKeyFromParent      = 0x40
-	P1DeriveKeyFromCurrent     = 0x80
-	P1ChangePinPIN             = 0x00
-	P1ChangePinPUK             = 0x01
-	P1ChangePinPairingSecret   = 0x02
-	P1SignCurrentKey           = 0x00
-	P1SignDerive               = 0x01
-	P1SignDeriveAndMakeCurrent = 0x02
-	P1SignPinless              = 0x03
+	P1PairingFirstStep              = 0x00
+	P1PairingFinalStep              = 0x01
+	P1GetStatusApplication          = 0x00
+	P1GetStatusKeyPath              = 0x01
+	P1DeriveKeyFromMaster           = 0x00
+	P1DeriveKeyFromParent           = 0x40
+	P1DeriveKeyFromCurrent          = 0x80
+	P1ChangePinPIN                  = 0x00
+	P1ChangePinPUK                  = 0x01
+	P1ChangePinPairingSecret        = 0x02
+	P1SignCurrentKey                = 0x00
+	P1SignDerive                    = 0x01
+	P1SignDeriveAndMakeCurrent      = 0x02
+	P1SignPinless                   = 0x03
+	P1ExportKeyCurrent              = uint8(0x00)
+	P1ExportKeyDerive               = uint8(0x01)
+	P1ExportKeyDeriveAndMakeCurrent = uint8(0x02)
+	P1LoadKeyKeyPair                = uint8(0x01)
+	P1LoadKeyKeyPairExtended        = uint8(0x02)
+	P1LoadKeySeed                   = uint8(0x03)
+
+	P2ExportKeyPrivateAndPublic = uint8(0x00)
+	P2ExportKeyPublicOnly       = uint8(0x01)
 
 	SwNoAvailablePairingSlots = 0x6A84
-
-	EXPORT_KEY_CURRENT                 = uint8(0x00)
-	EXPORT_KEY_DERIVE                  = uint8(0x01)
-	EXPORT_KEY_DERIVE_AND_MAKE_CURRENT = uint8(0x02)
-	EXPORT_KEY_PRIV_PUB                = uint8(0x00)
-	EXPORT_KEY_PUB                     = uint8(0x01)
 )
 
 func NewCommandInit(data []byte) *apdu.Command {
@@ -185,7 +190,7 @@ func NewCommandDeriveKey(pathStr string) (*apdu.Command, error) {
 		return nil, err
 	}
 
-	p1, err := _getDeriveP1(startingPoint)
+	p1, err := derivationP1FromStartingPoint(startingPoint)
 	if err != nil {
 		return nil, err
 	}
@@ -206,6 +211,27 @@ func NewCommandDeriveKey(pathStr string) (*apdu.Command, error) {
 	), nil
 }
 
+func NewCommandLoadKey(isSeed bool, isExtended bool, payload []byte) (*apdu.Command) {
+	var p1 uint8
+	var data []byte
+	if isSeed == true {
+		p1 = P1LoadKeySeed
+		data = payload
+	} else if isExtended == true {
+		// isExtended indicates the user has included a chaincode
+		p1 = P1LoadKeyKeyPairExtended
+	} else {
+		p1 = P1LoadKeyKeyPair
+	}
+	return apdu.NewCommand(
+		globalplatform.ClaGp,
+		InsLoadKey,
+		p1,
+		0,
+		data,
+	)
+}
+
 // Export a key
 //	@param {p1}
 //		0x00: current key - returns the key that is currently loaded and ready for signing. Does not use derivation path
@@ -222,7 +248,7 @@ func NewCommandExportKey(p1 uint8, p2 uint8, pathStr string) (*apdu.Command, err
 		return nil, err
 	}
 
-	deriveP1, err := _getDeriveP1(startingPoint)
+	deriveP1, err := derivationP1FromStartingPoint(startingPoint)
 	if err != nil {
 		return nil, err
 	}
@@ -237,7 +263,7 @@ func NewCommandExportKey(p1 uint8, p2 uint8, pathStr string) (*apdu.Command, err
 	return apdu.NewCommand(
 		globalplatform.ClaGp,
 		InsExportKey,
-		p1 | deriveP1,
+		p1|deriveP1,
 		p2,
 		data.Bytes(),
 	), nil
@@ -285,15 +311,15 @@ func NewCommandSign(data []byte, p1 uint8) (*apdu.Command, error) {
 
 // Internal function. Get the type of starting point for the derivation path.
 // Used for both DeriveKey and ExportKey
-func _getDeriveP1(s derivationpath.StartingPoint) (uint8, error) {
+func derivationP1FromStartingPoint(s derivationpath.StartingPoint) (uint8, error) {
 	switch s {
-		case derivationpath.StartingPointMaster:
-			return P1DeriveKeyFromMaster, nil
-		case derivationpath.StartingPointParent:
-			return P1DeriveKeyFromParent, nil
-		case derivationpath.StartingPointCurrent:
-			return P1DeriveKeyFromCurrent, nil
-		default:
-			return uint8(0), fmt.Errorf("invalid startingPoint %d", s)
+	case derivationpath.StartingPointMaster:
+		return P1DeriveKeyFromMaster, nil
+	case derivationpath.StartingPointParent:
+		return P1DeriveKeyFromParent, nil
+	case derivationpath.StartingPointCurrent:
+		return P1DeriveKeyFromCurrent, nil
+	default:
+		return uint8(0), fmt.Errorf("invalid startingPoint %d", s)
 	}
 }

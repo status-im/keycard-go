@@ -213,6 +213,12 @@ func (cs *CommandSet) GenerateKey() ([]byte, error) {
 	return resp.Data, nil
 }
 
+func (cs *CommandSet) LoadKey(isSeed bool, isExtended bool, data []byte) error {
+	cmd := NewCommandLoadKey(isSeed, isExtended, data)
+	res, err := cs.sc.Send(cmd)
+	return cs.checkOK(res, err);
+}
+
 func (cs *CommandSet) RemoveKey() error {
 	cmd := NewCommandRemoveKey()
 	resp, err := cs.sc.Send(cmd)
@@ -231,18 +237,18 @@ func (cs *CommandSet) DeriveKey(path string) error {
 
 func (cs *CommandSet) ExportKey(derive bool, makeCurrent bool, onlyPublic bool, path string) ([]byte, error) {
 	var p1 uint8
-	if (derive == false) {
-		p1 = EXPORT_KEY_CURRENT
-	} else if (makeCurrent == false) {
-		p1 = EXPORT_KEY_DERIVE
+	if derive == false {
+		p1 = P1ExportKeyCurrent
+	} else if makeCurrent == false {
+		p1 = P1ExportKeyDerive
 	} else {
-		p1 = EXPORT_KEY_DERIVE_AND_MAKE_CURRENT
+		p1 = P1ExportKeyDeriveAndMakeCurrent
 	}
 	var p2 uint8
-	if (onlyPublic == true) {
-		p2 = EXPORT_KEY_PUB
+	if onlyPublic == true {
+		p2 = P2ExportKeyPublicOnly
 	} else {
-		p2 = EXPORT_KEY_PRIV_PUB
+		p2 = P2ExportKeyPrivateAndPublic
 	}
 	cmd, err := NewCommandExportKey(p1, p2, path)
 	if err != nil {
