@@ -48,8 +48,8 @@ const (
 	P1LoadKeyKeyPairExtended        = uint8(0x02)
 	P1LoadKeySeed                   = uint8(0x03)
 
-	P2ExportKeyPrivateAndPublic = uint8(0x00)
-	P2ExportKeyPublicOnly       = uint8(0x01)
+	P2ExportKeyPrivateAndPublic     = uint8(0x00)
+	P2ExportKeyPublicOnly           = uint8(0x01)
 
 	SwNoAvailablePairingSlots = 0x6A84
 )
