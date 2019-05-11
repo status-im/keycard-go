@@ -41,14 +41,7 @@ func (cs *CommandSet) Select() error {
 		return err
 	}
 
-	cmd := apdu.NewCommand(
-		0x00,
-		globalplatform.InsSelect,
-		uint8(0x04),
-		uint8(0x00),
-		instanceAID,
-	)
-
+	cmd := globalplatform.NewCommandSelect(instanceAID)
 	cmd.SetLe(0)
 	resp, err := cs.c.Send(cmd)
 	if err = cs.checkOK(resp, err); err != nil {
@@ -244,18 +237,18 @@ func (cs *CommandSet) DeriveKey(path string) error {
 
 func (cs *CommandSet) ExportKey(derive bool, makeCurrent bool, onlyPublic bool, path string) ([]byte, error) {
 	var p1 uint8
-	if (derive == false) {
-		p1 = 0x00
-	} else if (makeCurrent == false) {
-		p1 = 0x01
+	if derive == false {
+		p1 = P1ExportKeyCurrent
+	} else if makeCurrent == false {
+		p1 = P1ExportKeyDerive
 	} else {
-		p1 = 0x02
+		p1 = P1ExportKeyDeriveAndMakeCurrent
 	}
 	var p2 uint8
-	if (onlyPublic == true) {
-		p2 = 0x01
+	if onlyPublic == true {
+		p2 = P2ExportKeyPublicOnly
 	} else {
-		p2 = 0x00
+		p2 = P2ExportKeyPrivateAndPublic
 	}
 	cmd, err := NewCommandExportKey(p1, p2, path)
 	if err != nil {
@@ -263,7 +256,6 @@ func (cs *CommandSet) ExportKey(derive bool, makeCurrent bool, onlyPublic bool, 
 	}	
 
 	resp, err := cs.sc.Send(cmd)
-	// fmt.Printf("res.Data: %x\n", resp.Data)
 	err = cs.checkOK(resp, err)
 	if err != nil {
 		return nil, err
