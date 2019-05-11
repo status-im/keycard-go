@@ -44,6 +44,9 @@ const (
 	P1ExportKeyCurrent              = uint8(0x00)
 	P1ExportKeyDerive               = uint8(0x01)
 	P1ExportKeyDeriveAndMakeCurrent = uint8(0x02)
+	P1LoadKeyKeyPair                = uint8(0x01)
+	P1LoadKeyKeyPairExtended        = uint8(0x02)
+	P1LoadKeySeed                   = uint8(0x03)
 
 	P2ExportKeyPrivateAndPublic = uint8(0x00)
 	P2ExportKeyPublicOnly       = uint8(0x01)
@@ -212,13 +215,13 @@ func NewCommandLoadKey(isSeed bool, isExtended bool, payload []byte) (*apdu.Comm
 	var p1 uint8
 	var data []byte
 	if isSeed == true {
-		p1 = 0x03
+		p1 = P1LoadKeySeed
 		data = payload
 	} else if isExtended == true {
 		// isExtended indicates the user has included a chaincode
-		p1 = 0x02
+		p1 = P1LoadKeyKeyPairExtended
 	} else {
-		p1 = 0x01
+		p1 = P1LoadKeyKeyPair
 	}
 	return apdu.NewCommand(
 		globalplatform.ClaGp,
