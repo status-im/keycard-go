@@ -3,6 +3,7 @@ pipeline {
     docker {
       label 'linux'
       image 'golang:1.12'
+      args  '-u 0:0'
     }
   }
 
