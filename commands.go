@@ -270,9 +270,25 @@ func NewCommandSetPinlessPath(pathStr string) (*apdu.Command, error) {
 	), nil
 }
 
-func NewCommandSign(data []byte, p1 uint8) (*apdu.Command, error) {
+func NewCommandSign(data []byte, p1 uint8, pathStr string) (*apdu.Command, error) {
 	if len(data) != 32 {
 		return nil, fmt.Errorf("data length must be 32, got %d", len(data))
+	}
+
+	if p1 == P1SignDerive || p1 == P1SignDeriveAndMakeCurrent {
+		_, path, err := derivationpath.Decode(pathStr)
+		if err != nil {
+			return nil, err
+		}
+
+		pathData := new(bytes.Buffer)
+		for _, segment := range path {
+			if err := binary.Write(pathData, binary.BigEndian, segment); err != nil {
+				return nil, err
+			}
+		}
+
+		data = append(data, pathData.Bytes()...)
 	}
 
 	return apdu.NewCommand(
