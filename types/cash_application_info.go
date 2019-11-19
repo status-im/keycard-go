@@ -3,6 +3,7 @@ package types
 import "github.com/status-im/keycard-go/apdu"
 
 type CashApplicationInfo struct {
+	Installed     bool
 	PublicKey     []byte
 	PublicKeyData []byte
 	Version       []byte
@@ -14,6 +15,8 @@ func ParseCashApplicationInfo(data []byte) (*CashApplicationInfo, error) {
 	if data[0] != TagApplicationInfoTemplate {
 		return nil, ErrWrongApplicationInfoTemplate
 	}
+
+	info.Installed = true
 
 	pubKey, err := apdu.FindTag(data, apdu.Tag{TagApplicationInfoTemplate}, apdu.Tag{0x80})
 	if err != nil {

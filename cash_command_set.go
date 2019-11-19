@@ -14,7 +14,8 @@ type CashCommandSet struct {
 
 func NewCashCommandSet(c types.Channel) *CashCommandSet {
 	return &CashCommandSet{
-		c: c,
+		c:                   c,
+		CashApplicationInfo: &types.CashApplicationInfo{},
 	}
 }
 
@@ -23,7 +24,6 @@ func (cs *CashCommandSet) Select() error {
 	cmd.SetLe(0)
 	resp, err := cs.c.Send(cmd)
 	if err = cs.checkOK(resp, err); err != nil {
-		cs.CashApplicationInfo = &types.CashApplicationInfo{}
 		return err
 	}
 
