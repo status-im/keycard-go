@@ -127,6 +127,14 @@ func (cs *CommandSet) InstallKeycardApplet() error {
 		[]byte{})
 }
 
+func (cs *CommandSet) InstallCashApplet() error {
+	return cs.InstallForInstall(
+		identifiers.PackageAID,
+		identifiers.CashAID,
+		identifiers.CashInstanceAID,
+		[]byte{})
+}
+
 func (cs *CommandSet) InstallForInstall(packageAID, appletAID, instanceAID, params []byte) error {
 	cmd := NewCommandInstallForInstall(packageAID, appletAID, instanceAID, params)
 	resp, err := cs.sc.Send(cmd)
