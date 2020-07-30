@@ -229,7 +229,7 @@ func (cs *CommandSet) DeriveKey(path string) error {
 	return cs.checkOK(resp, err)
 }
 
-func (cs *CommandSet) ExportKey(derive bool, makeCurrent bool, onlyPublic bool, path string) ([]byte, error) {
+func (cs *CommandSet) ExportKey(derive bool, makeCurrent bool, onlyPublic bool, path string) (*types.KeyPair, error) {
 	var p1 uint8
 	if derive == false {
 		p1 = P1ExportKeyCurrent
@@ -254,8 +254,7 @@ func (cs *CommandSet) ExportKey(derive bool, makeCurrent bool, onlyPublic bool, 
 	if err != nil {
 		return nil, err
 	}
-	return resp.Data, nil
-
+	return types.ParseKeyPair(resp.Data)
 }
 
 func (cs *CommandSet) SetPinlessPath(path string) error {
