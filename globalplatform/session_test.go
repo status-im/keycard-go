@@ -3,8 +3,8 @@ package globalplatform
 import (
 	"testing"
 
-	"github.com/status-im/keycard-go/apdu"
-	"github.com/status-im/keycard-go/hexutils"
+	"github.com/GridPlus/keycard-go/apdu"
+	"github.com/GridPlus/keycard-go/hexutils"
 	"github.com/stretchr/testify/assert"
 )
 

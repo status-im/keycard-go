@@ -3,7 +3,7 @@ package types
 import (
 	"errors"
 
-	"github.com/status-im/keycard-go/apdu"
+	"github.com/GridPlus/keycard-go/apdu"
 )
 
 var ErrWrongApplicationInfoTemplate = errors.New("wrong application info template")

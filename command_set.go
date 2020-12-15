@@ -5,11 +5,11 @@ import (
 	"crypto/sha256"
 	"errors"
 
-	"github.com/status-im/keycard-go/apdu"
-	"github.com/status-im/keycard-go/crypto"
-	"github.com/status-im/keycard-go/globalplatform"
-	"github.com/status-im/keycard-go/identifiers"
-	"github.com/status-im/keycard-go/types"
+	"github.com/GridPlus/keycard-go/apdu"
+	"github.com/GridPlus/keycard-go/crypto"
+	"github.com/GridPlus/keycard-go/globalplatform"
+	"github.com/GridPlus/keycard-go/identifiers"
+	"github.com/GridPlus/keycard-go/types"
 )
 
 var ErrNoAvailablePairingSlots = errors.New("no available pairing slots")

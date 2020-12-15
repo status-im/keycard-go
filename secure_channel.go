@@ -6,11 +6,11 @@ import (
 	"errors"
 
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
-	"github.com/status-im/keycard-go/apdu"
-	"github.com/status-im/keycard-go/crypto"
-	"github.com/status-im/keycard-go/globalplatform"
-	"github.com/status-im/keycard-go/hexutils"
-	"github.com/status-im/keycard-go/types"
+	"github.com/GridPlus/keycard-go/apdu"
+	"github.com/GridPlus/keycard-go/crypto"
+	"github.com/GridPlus/keycard-go/globalplatform"
+	"github.com/GridPlus/keycard-go/hexutils"
+	"github.com/GridPlus/keycard-go/types"
 )
 
 var ErrInvalidResponseMAC = errors.New("invalid response MAC")

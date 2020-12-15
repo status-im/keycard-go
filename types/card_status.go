@@ -3,7 +3,7 @@ package types
 import (
 	"fmt"
 
-	"github.com/status-im/keycard-go/apdu"
+	"github.com/GridPlus/keycard-go/apdu"
 )
 
 type lifeCycle byte

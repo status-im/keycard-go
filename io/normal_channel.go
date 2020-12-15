@@ -1,10 +1,10 @@
 package io
 
 import (
+	"github.com/GridPlus/keycard-go/apdu"
+	"github.com/GridPlus/keycard-go/globalplatform"
+	"github.com/GridPlus/keycard-go/hexutils"
 	"github.com/ethereum/go-ethereum/log"
-	"github.com/status-im/keycard-go/apdu"
-	"github.com/status-im/keycard-go/globalplatform"
-	"github.com/status-im/keycard-go/hexutils"
 )
 
 var logger = log.New("package", "io")

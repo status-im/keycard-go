@@ -5,9 +5,9 @@ import (
 	"errors"
 	"os"
 
-	"github.com/status-im/keycard-go/apdu"
-	"github.com/status-im/keycard-go/identifiers"
-	"github.com/status-im/keycard-go/types"
+	"github.com/GridPlus/keycard-go/apdu"
+	"github.com/GridPlus/keycard-go/identifiers"
+	"github.com/GridPlus/keycard-go/types"
 )
 
 var ErrSecureChannelNotOpen = errors.New("secure channel not open")

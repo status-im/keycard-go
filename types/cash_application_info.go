@@ -1,6 +1,6 @@
 package types
 
-import "github.com/status-im/keycard-go/apdu"
+import "github.com/GridPlus/keycard-go/apdu"
 
 type CashApplicationInfo struct {
 	Installed  bool

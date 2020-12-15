@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/status-im/keycard-go/apdu"
+	"github.com/GridPlus/keycard-go/apdu"
 )
 
 var internalFiles = []string{
