@@ -8,8 +8,8 @@ import (
 	"github.com/GridPlus/keycard-go/apdu"
 	"github.com/GridPlus/keycard-go/crypto"
 	"github.com/GridPlus/keycard-go/globalplatform"
-	"github.com/GridPlus/keycard-go/identifiers"
 	"github.com/GridPlus/keycard-go/types"
+	log "github.com/sirupsen/logrus"
 )
 
 var ErrNoAvailablePairingSlots = errors.New("no available pairing slots")
@@ -36,36 +36,84 @@ func (cs *CommandSet) SetPairingInfo(key []byte, index int) {
 	}
 }
 
-func (cs *CommandSet) Select() error {
-	instanceAID, err := identifiers.KeycardInstanceAID(identifiers.KeycardDefaultInstanceIndex)
-	if err != nil {
-		return err
+//Manually parse possible TLV responses
+func parseSelectResponse(resp []byte) (instanceUID []byte, cardPubKey []byte, err error) {
+	if len(resp) == 0 {
+		return nil, nil, errors.New("received nil response")
+	}
+	switch resp[0] {
+	//Initialized
+	case 0xA4:
+		log.Info("card wallet initialized")
+		//If length of length is set this is a long format TLV response
+		if len(resp) < 88 {
+			log.Error("response should have been at least length 86 bytes, was length: ", len(resp))
+			return nil, nil, errors.New("invalid response length")
+		}
+		if resp[3] == 0x81 {
+			instanceUID = resp[6:22]
+			cardPubKey = resp[24:89]
+		} else {
+			instanceUID = resp[5:21]
+			cardPubKey = resp[23:88]
+		}
+	case 0x80:
+		log.Error("card wallet uninitialized")
+		return nil, nil, errors.New("card wallet uninitialized")
 	}
 
-	cmd := globalplatform.NewCommandSelect(instanceAID)
+	return instanceUID, cardPubKey, nil
+}
+
+func (cs *CommandSet) Select() error {
+	var SafecardAID = []byte{0xA0, 0x00, 0x00, 0x08, 0x20, 0x00, 0x01, 0x01}
+	cmd := globalplatform.NewCommandSelect(SafecardAID)
 	cmd.SetLe(0)
 	resp, err := cs.c.Send(cmd)
-	if err = cs.checkOK(resp, err); err != nil {
+	if err != nil {
+		log.Error("could not send select command. err: ", err)
 		return err
 	}
 
-	appInfo, err := types.ParseApplicationInfo(resp.Data)
+	instanceUID, pubKey, err := parseSelectResponse(resp.Data)
 	if err != nil {
 		return err
 	}
+	log.Infof("instanceUID: % X\npubKey: % X", instanceUID, pubKey)
+	// c.instanceUID = instanceUID
+	// c.pubKey = pubKey
 
-	cs.ApplicationInfo = appInfo
-
-	if cs.ApplicationInfo.HasSecureChannelCapability() {
-		err = cs.sc.GenerateSecret(cs.ApplicationInfo.SecureChannelPublicKey)
-		if err != nil {
-			return err
-		}
-
-		cs.sc.Reset()
-	}
-
+	log.Debug("select response: % X", resp)
 	return nil
+	// instanceAID, err := identifiers.KeycardInstanceAID(identifiers.KeycardDefaultInstanceIndex)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// cmd := globalplatform.NewCommandSelect(instanceAID)
+	// cmd.SetLe(0)
+	// resp, err := cs.c.Send(cmd)
+	// if err = cs.checkOK(resp, err); err != nil {
+	// 	return err
+	// }
+
+	// appInfo, err := types.ParseApplicationInfo(resp.Data)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// cs.ApplicationInfo = appInfo
+
+	// if cs.ApplicationInfo.HasSecureChannelCapability() {
+	// 	err = cs.sc.GenerateSecret(cs.ApplicationInfo.SecureChannelPublicKey)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+
+	// 	cs.sc.Reset()
+	// }
+
+	// return nil
 }
 
 func (cs *CommandSet) Init(secrets *Secrets) error {
