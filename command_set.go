@@ -135,8 +135,7 @@ func (cs *CommandSet) Pair() error {
 		return err
 	}
 
-	//This works!!!!!!!!!!!~!!!!!!!!!!!
-	//Standalone challenge message test
+	//challenge message test
 	ecdhSecret := crypto.GenerateECDHSharedSecret(pairingPrivKey, cardCertPubKey)
 
 	secretHashArray := sha256.Sum256(append(clientSalt, ecdhSecret...))
