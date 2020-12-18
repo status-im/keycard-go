@@ -5,12 +5,12 @@ import (
 	"crypto/ecdsa"
 	"errors"
 
-	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/GridPlus/keycard-go/apdu"
 	"github.com/GridPlus/keycard-go/crypto"
 	"github.com/GridPlus/keycard-go/globalplatform"
 	"github.com/GridPlus/keycard-go/hexutils"
 	"github.com/GridPlus/keycard-go/types"
+	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 )
 
 var ErrInvalidResponseMAC = errors.New("invalid response MAC")
