@@ -86,11 +86,6 @@ func (cs *CommandSet) Pair() error {
 	clientSalt := make([]byte, 32)
 	rand.Read(clientSalt)
 
-	// clientPrivKey, err := secp256k1.GeneratePrivateKey()
-	// if err != nil {
-	// 	log.Error("could not generate ECC private key")
-	// }
-
 	pairingPrivKey, err := ethcrypto.GenerateKey()
 	if err != nil {
 		log.Error("unable to generate pairing keypair. err: ", err)
@@ -120,8 +115,7 @@ func (cs *CommandSet) Pair() error {
 	log.Info("pair step 2 safecard cert:\n", hex.Dump(pairStep1Resp.SafecardCert.PubKey))
 	//Validate Certificate pub key
 	//Parse ECDSA pubkey object from cardPubKey bytes
-	//Offset start of pubkey by 3
-	//2 byte TLV header + DER type byte
+	//Offset start of pubkey by 3 for 2 byte TLV header + DER type byte
 	cardCertPubKey := &ecdsa.PublicKey{
 		Curve: ethcrypto.S256(),
 		X:     new(big.Int).SetBytes(pairStep1Resp.SafecardCert.PubKey[3:35]),
