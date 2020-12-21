@@ -1,14 +1,20 @@
 package keycard
 
 import (
+	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/sha256"
+	"encoding/asn1"
+	"encoding/hex"
 	"errors"
+	"math/big"
 
 	"github.com/GridPlus/keycard-go/apdu"
 	"github.com/GridPlus/keycard-go/crypto"
 	"github.com/GridPlus/keycard-go/globalplatform"
+	"github.com/GridPlus/keycard-go/gridplus"
 	"github.com/GridPlus/keycard-go/types"
+	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -36,35 +42,6 @@ func (cs *CommandSet) SetPairingInfo(key []byte, index int) {
 	}
 }
 
-//Manually parse possible TLV responses
-func parseSelectResponse(resp []byte) (instanceUID []byte, cardPubKey []byte, err error) {
-	if len(resp) == 0 {
-		return nil, nil, errors.New("received nil response")
-	}
-	switch resp[0] {
-	//Initialized
-	case 0xA4:
-		log.Info("card wallet initialized")
-		//If length of length is set this is a long format TLV response
-		if len(resp) < 88 {
-			log.Error("response should have been at least length 86 bytes, was length: ", len(resp))
-			return nil, nil, errors.New("invalid response length")
-		}
-		if resp[3] == 0x81 {
-			instanceUID = resp[6:22]
-			cardPubKey = resp[24:89]
-		} else {
-			instanceUID = resp[5:21]
-			cardPubKey = resp[23:88]
-		}
-	case 0x80:
-		log.Error("card wallet uninitialized")
-		return nil, nil, errors.New("card wallet uninitialized")
-	}
-
-	return instanceUID, cardPubKey, nil
-}
-
 func (cs *CommandSet) Select() error {
 	var SafecardAID = []byte{0xA0, 0x00, 0x00, 0x08, 0x20, 0x00, 0x01, 0x01}
 	cmd := globalplatform.NewCommandSelect(SafecardAID)
@@ -75,45 +52,22 @@ func (cs *CommandSet) Select() error {
 		return err
 	}
 
-	instanceUID, pubKey, err := parseSelectResponse(resp.Data)
+	log.Debug("select response: ", hex.Dump(resp.Data))
+	instanceUID, cardPubKey, err := gridplus.ParseSelectResponse(resp.Data)
 	if err != nil {
 		return err
 	}
-	log.Infof("instanceUID: % X\npubKey: % X", instanceUID, pubKey)
-	// c.instanceUID = instanceUID
-	// c.pubKey = pubKey
+	log.Debugf("instanceUID: % X", instanceUID)
+	log.Debugf("select response pubKey: % X", cardPubKey)
 
-	log.Debug("select response: % X", resp)
+	//Generating secure channel secrets here in advance of pairing and opening channel
+	err = cs.sc.GenerateSecret(cardPubKey)
+	if err != nil {
+		log.Error("unable to generate secure channel secrets. err: ", err)
+		return err
+	}
+
 	return nil
-	// instanceAID, err := identifiers.KeycardInstanceAID(identifiers.KeycardDefaultInstanceIndex)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// cmd := globalplatform.NewCommandSelect(instanceAID)
-	// cmd.SetLe(0)
-	// resp, err := cs.c.Send(cmd)
-	// if err = cs.checkOK(resp, err); err != nil {
-	// 	return err
-	// }
-
-	// appInfo, err := types.ParseApplicationInfo(resp.Data)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// cs.ApplicationInfo = appInfo
-
-	// if cs.ApplicationInfo.HasSecureChannelCapability() {
-	// 	err = cs.sc.GenerateSecret(cs.ApplicationInfo.SecureChannelPublicKey)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
-	// 	cs.sc.Reset()
-	// }
-
-	// return nil
 }
 
 func (cs *CommandSet) Init(secrets *Secrets) error {
@@ -128,50 +82,96 @@ func (cs *CommandSet) Init(secrets *Secrets) error {
 	return cs.checkOK(resp, err)
 }
 
-func (cs *CommandSet) Pair(pairingPass string) error {
-	challenge := make([]byte, 32)
-	if _, err := rand.Read(challenge); err != nil {
-		return err
-	}
+func (cs *CommandSet) Pair() error {
+	clientSalt := make([]byte, 32)
+	rand.Read(clientSalt)
 
-	cmd := NewCommandPairFirstStep(challenge)
-	resp, err := cs.c.Send(cmd)
-	if resp.Sw == SwNoAvailablePairingSlots {
-		return ErrNoAvailablePairingSlots
-	}
-
-	if err = cs.checkOK(resp, err); err != nil {
-		return err
-	}
-
-	cardCryptogram := resp.Data[:32]
-	cardChallenge := resp.Data[32:]
-
-	secretHash, err := crypto.VerifyCryptogram(challenge, pairingPass, cardCryptogram)
+	pairingPrivKey, err := ethcrypto.GenerateKey()
 	if err != nil {
+		log.Error("unable to generate pairing keypair. err: ", err)
+		return err
+	}
+	pairingPubKey := pairingPrivKey.PublicKey
+
+	cmd := gridplus.NewAPDUPairStep1(clientSalt, &pairingPubKey)
+
+	resp, err := cs.c.Send(cmd)
+	if err != nil {
+		log.Error("unable to send Pair Step 1 command. err: ", err)
+		return err
+	}
+	pairStep1Resp, err := gridplus.ParsePairStep1Response(resp.Data)
+	if err != nil {
+		log.Error("could not parse pair step 2 response. err: ", err)
+	}
+
+	certValid := gridplus.ValidateCardCertificate(pairStep1Resp.SafecardCert)
+	log.Info("certificate signature valid: ", certValid)
+	if !certValid {
+		log.Error("unable to verify card certificate.")
 		return err
 	}
 
-	h := sha256.New()
-	h.Write(secretHash[:])
-	h.Write(cardChallenge)
-	cmd = NewCommandPairFinalStep(h.Sum(nil))
+	log.Info("pair step 2 safecard cert:\n", hex.Dump(pairStep1Resp.SafecardCert.PubKey))
+	//Validate Certificate pub key
+	//Parse ECDSA pubkey object from cardPubKey bytes
+	//Offset start of pubkey by 3 for 2 byte TLV header + DER type byte
+	cardCertPubKey := &ecdsa.PublicKey{
+		Curve: ethcrypto.S256(),
+		X:     new(big.Int).SetBytes(pairStep1Resp.SafecardCert.PubKey[3:35]),
+		Y:     new(big.Int).SetBytes(pairStep1Resp.SafecardCert.PubKey[35:67]),
+	}
+
+	pubKeyValid := gridplus.ValidateECCPubKey(cardCertPubKey)
+	log.Info("certificate public key valid: ", pubKeyValid)
+	if !pubKeyValid {
+		log.Error("card pubkey invalid")
+		return err
+	}
+
+	//challenge message test
+	ecdhSecret := crypto.GenerateECDHSharedSecret(pairingPrivKey, cardCertPubKey)
+
+	secretHashArray := sha256.Sum256(append(clientSalt, ecdhSecret...))
+	secretHash := secretHashArray[0:]
+
+	type ECDSASignature struct {
+		R, S *big.Int
+	}
+	signature := &ECDSASignature{}
+	_, err = asn1.Unmarshal(pairStep1Resp.SafecardSig, signature)
+	if err != nil {
+		log.Error("could not unmarshal certificate signature.", err)
+	}
+
+	valid := ecdsa.Verify(cardCertPubKey, secretHash, signature.R, signature.S)
+	if !valid {
+		log.Error("ecdsa sig not valid")
+		return errors.New("could not verify shared secret challenge")
+	}
+	log.Info("card signature on challenge message valid: ", valid)
+
+	cryptogram := sha256.Sum256(append(pairStep1Resp.SafecardSalt, secretHash...))
+
+	cmd = gridplus.NewAPDUPairStep2(cryptogram[0:])
 	resp, err = cs.c.Send(cmd)
-	if err = cs.checkOK(resp, err); err != nil {
+	if err != nil {
+		log.Error("error sending pair step 2 command. err: ", err)
 		return err
 	}
 
-	h.Reset()
-	h.Write(secretHash[:])
-	h.Write(resp.Data[1:])
-
-	pairingKey := h.Sum(nil)
-	pairingIndex := resp.Data[0]
-
-	cs.PairingInfo = &types.PairingInfo{
-		Key:   pairingKey,
-		Index: int(pairingIndex),
+	pairStep2Resp, err := gridplus.ParsePairStep2Response(resp.Data)
+	if err != nil {
+		log.Error("could not parse pair step 2 response. err: ", err)
 	}
+	log.Infof("pairStep2Resp: % X", pairStep2Resp)
+
+	//Derive Pairing Key
+	pairingKey := sha256.Sum256(append(pairStep2Resp.Salt, secretHash...))
+	log.Infof("derived pairing key: % X", pairingKey)
+
+	//Store pairing info for use in OpenSecureChannel
+	cs.SetPairingInfo(pairingKey[0:], pairStep2Resp.PairingIdx)
 
 	return nil
 }
