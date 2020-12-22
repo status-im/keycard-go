@@ -225,7 +225,6 @@ func (cs *CommandSet) GetStatusKeyPath() (*types.ApplicationStatus, error) {
 func (cs *CommandSet) VerifyPIN(pin string) error {
 	cmd := NewCommandVerifyPIN(pin)
 	resp, err := cs.sc.Send(cmd)
-
 	return cs.checkOK(resp, err)
 }
 
@@ -303,7 +302,22 @@ func (cs *CommandSet) ExportKey(derive bool, makeCurrent bool, onlyPublic bool, 
 		return nil, err
 	}
 	return resp.Data, nil
+}
 
+func (cs *CommandSet) ExportSeed() ([]byte, error) {
+	cmd := NewCommandExportSeed()
+	resp, err := cs.sc.Send(cmd)
+	if err != nil {
+		log.Errorf("error exporting key. err: ", err)
+		return nil, err
+	}
+	seed, err := gridplus.ParseExportSeedResponse(resp.Data)
+	if err != nil {
+		return nil, err
+	}
+	log.Info("seed:\n", hex.Dump(seed))
+
+	return seed, nil
 }
 
 func (cs *CommandSet) SetPinlessPath(path string) error {
