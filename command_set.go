@@ -308,15 +308,12 @@ func (cs *CommandSet) ExportSeed() ([]byte, error) {
 	cmd := NewCommandExportSeed()
 	resp, err := cs.sc.Send(cmd)
 	if err != nil {
-		log.Errorf("error exporting key. err: ", err)
 		return nil, err
 	}
 	seed, err := gridplus.ParseExportSeedResponse(resp.Data)
 	if err != nil {
 		return nil, err
 	}
-	log.Info("seed:\n", hex.Dump(seed))
-
 	return seed, nil
 }
 
