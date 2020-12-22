@@ -125,3 +125,10 @@ func ParsePairStep2Response(resp []byte) (SafecardRAPDUStep2, error) {
 		Salt:       resp[1:33],
 	}, nil
 }
+
+func ParseExportSeedResponse(resp []byte) ([]byte, error) {
+	if len(resp) != 66 {
+		return nil, errors.New("export seed response invalid length")
+	}
+	return resp[2:], nil
+}

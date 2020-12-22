@@ -23,6 +23,7 @@ const (
 	InsChangePIN            = 0x21
 	InsDeriveKey            = 0xD1
 	InsExportKey            = 0xC2
+	InsExportSeed           = 0xC3
 	InsSign                 = 0xC0
 	InsSetPinlessPath       = 0xC1
 	InsLoadKey              = 0xD0
@@ -324,4 +325,14 @@ func derivationP1FromStartingPoint(s derivationpath.StartingPoint) (uint8, error
 	default:
 		return uint8(0), fmt.Errorf("invalid startingPoint %d", s)
 	}
+}
+
+func NewCommandExportSeed() *apdu.Command {
+	return apdu.NewCommand(
+		globalplatform.ClaGp,
+		InsExportSeed,
+		0,
+		0,
+		nil,
+	)
 }
