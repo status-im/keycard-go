@@ -83,6 +83,7 @@ func (cs *CommandSet) Init(secrets *Secrets) error {
 }
 
 func (cs *CommandSet) Pair() error {
+	//Generate random salt and keypair
 	clientSalt := make([]byte, 32)
 	rand.Read(clientSalt)
 
@@ -93,8 +94,8 @@ func (cs *CommandSet) Pair() error {
 	}
 	pairingPubKey := pairingPrivKey.PublicKey
 
+	//Exchange pairing key info with card
 	cmd := gridplus.NewAPDUPairStep1(clientSalt, &pairingPubKey)
-
 	resp, err := cs.c.Send(cmd)
 	if err != nil {
 		log.Error("unable to send Pair Step 1 command. err: ", err)
@@ -105,25 +106,23 @@ func (cs *CommandSet) Pair() error {
 		log.Error("could not parse pair step 2 response. err: ", err)
 	}
 
+	//Validate card's certificate has valid GridPlus signature
 	certValid := gridplus.ValidateCardCertificate(pairStep1Resp.SafecardCert)
-	log.Info("certificate signature valid: ", certValid)
+	log.Debug("certificate signature valid: ", certValid)
 	if !certValid {
 		log.Error("unable to verify card certificate.")
 		return err
 	}
+	log.Debug("pair step 2 safecard cert:\n", hex.Dump(pairStep1Resp.SafecardCert.PubKey))
 
-	log.Info("pair step 2 safecard cert:\n", hex.Dump(pairStep1Resp.SafecardCert.PubKey))
-	//Validate Certificate pub key
-	//Parse ECDSA pubkey object from cardPubKey bytes
-	//Offset start of pubkey by 3 for 2 byte TLV header + DER type byte
-	cardCertPubKey := &ecdsa.PublicKey{
-		Curve: ethcrypto.S256(),
-		X:     new(big.Int).SetBytes(pairStep1Resp.SafecardCert.PubKey[3:35]),
-		Y:     new(big.Int).SetBytes(pairStep1Resp.SafecardCert.PubKey[35:67]),
+	cardCertPubKey, err := gridplus.ParseCertPubkeyToECDSA(pairStep1Resp.SafecardCert.PubKey)
+	if err != nil {
+		log.Error("unable to parse certificate public key. err: ", err)
+		return err
 	}
 
 	pubKeyValid := gridplus.ValidateECCPubKey(cardCertPubKey)
-	log.Info("certificate public key valid: ", pubKeyValid)
+	log.Debug("certificate public key valid: ", pubKeyValid)
 	if !pubKeyValid {
 		log.Error("card pubkey invalid")
 		return err
@@ -144,12 +143,13 @@ func (cs *CommandSet) Pair() error {
 		log.Error("could not unmarshal certificate signature.", err)
 	}
 
+	//validate that card created valid signature over same salted and hashed ecdh secret
 	valid := ecdsa.Verify(cardCertPubKey, secretHash, signature.R, signature.S)
 	if !valid {
 		log.Error("ecdsa sig not valid")
 		return errors.New("could not verify shared secret challenge")
 	}
-	log.Info("card signature on challenge message valid: ", valid)
+	log.Debug("card signature on challenge message valid: ", valid)
 
 	cryptogram := sha256.Sum256(append(pairStep1Resp.SafecardSalt, secretHash...))
 
@@ -164,11 +164,11 @@ func (cs *CommandSet) Pair() error {
 	if err != nil {
 		log.Error("could not parse pair step 2 response. err: ", err)
 	}
-	log.Infof("pairStep2Resp: % X", pairStep2Resp)
+	log.Debugf("pairStep2Resp: % X", pairStep2Resp)
 
 	//Derive Pairing Key
 	pairingKey := sha256.Sum256(append(pairStep2Resp.Salt, secretHash...))
-	log.Infof("derived pairing key: % X", pairingKey)
+	log.Debugf("derived pairing key: % X", pairingKey)
 
 	//Store pairing info for use in OpenSecureChannel
 	cs.SetPairingInfo(pairingKey[0:], pairStep2Resp.PairingIdx)
