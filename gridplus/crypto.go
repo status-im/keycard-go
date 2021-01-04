@@ -4,9 +4,11 @@ import (
 	"crypto/ecdsa"
 	"crypto/sha256"
 	"encoding/asn1"
+	"errors"
 	"math/big"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v2"
+	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -39,7 +41,6 @@ func ValidateCardCertificate(cert SafecardCert) bool {
 		Y:     Y,
 	}
 
-	//Able to decode the DER signature with this library, should do more of this.
 	type ECDSASignature struct {
 		R, S *big.Int
 	}
@@ -49,9 +50,7 @@ func ValidateCardCertificate(cert SafecardCert) bool {
 		log.Error("could not unmarshal certificate signature.", err)
 	}
 
-	log.Infof("certHash: % X", certHash)
-	log.Info("pubKey X ", X)
-	log.Info("pubKey Y ", Y)
+	log.Debugf("certHash: % X", certHash)
 
 	return ecdsa.Verify(CApubKey, certHash[0:], signature.R, signature.S)
 }
@@ -73,4 +72,18 @@ func ValidateECCPubKey(pubKey *ecdsa.PublicKey) bool {
 
 	//TODO: more checks for point is not at infinity, not sure if these are needed
 	return true
+}
+
+func ParseCertPubkeyToECDSA(cert []byte) (*ecdsa.PublicKey, error) {
+	//check length to avoid panics if cert is malformed
+	if len(cert) < 67 {
+		return nil, errors.New("certificate invalid length")
+	}
+	//Offset start of pubkey by 3 for 2 byte TLV header + DER type byte
+	pubKey := &ecdsa.PublicKey{
+		Curve: ethcrypto.S256(),
+		X:     new(big.Int).SetBytes(cert[3:35]),
+		Y:     new(big.Int).SetBytes(cert[35:67]),
+	}
+	return pubKey, nil
 }

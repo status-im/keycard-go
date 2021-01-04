@@ -10,10 +10,8 @@ import (
 
 var (
 	SafecardAID                                   = []byte{0xA0, 0x00, 0x00, 0x08, 0x20, 0x00, 0x01, 0x01}
-	StatusWalletAID                               = []byte{0xA0, 0x00, 0x00, 0x08, 0x04, 0x00, 0x01, 0x01, 0x01}
 	SAFECARD_APDU_CLA_ENCRYPTED_PROPRIETARY uint8 = 0x80
 	SAFECARD_APDU_INS_PAIR                  uint8 = 0x12
-	SAFECARD_APDU_INS_OPEN_SECURE_CHANNEL   uint8 = 0x10
 	PAIR_STEP1                              uint8 = 0x00
 	PAIR_STEP2                              uint8 = 0x01
 	TLV_TYPE_CUSTOM                         uint8 = 0x80
@@ -44,7 +42,7 @@ func ParseSelectResponse(resp []byte) (instanceUID []byte, cardPubKey []byte, er
 	switch resp[0] {
 	//Initialized
 	case 0xA4:
-		log.Info("card wallet initialized")
+		log.Debug("card wallet initialized")
 		//If length of length is set this is a long format TLV response
 		if len(resp) < 88 {
 			log.Error("response should have been at least length 86 bytes, was length: ", len(resp))
@@ -71,7 +69,7 @@ func NewAPDUPairStep1(clientSalt []byte, pubKey *ecdsa.PublicKey) *apdu.Command 
 	payload := append(clientSalt, TLV_TYPE_CUSTOM, byte(len(pubKeyBytes)))
 	payload = append(payload, pubKeyBytes...)
 
-	log.Info("payload length: ", len(payload))
+	log.Debug("payload length: ", len(payload))
 	return apdu.NewCommand(
 		SAFECARD_APDU_CLA_ENCRYPTED_PROPRIETARY,
 		SAFECARD_APDU_INS_PAIR,
@@ -91,7 +89,7 @@ func ParsePairStep1Response(resp []byte) (apduResp SafecardRAPDUStep1, err error
 		Sig:         resp[38+65+2 : 34+certLength], //sig can be 72 to 74 bytes
 	}
 
-	log.Infof("end of resp len(%v): % X", len(resp[34+certLength:]), resp[34+certLength:])
+	log.Debugf("end of resp len(%v): % X", len(resp[34+certLength:]), resp[34+certLength:])
 	apduResp.SafecardSig = resp[34+certLength:]
 
 	log.Debugf("card salt length(%v):\n% X", len(apduResp.SafecardSalt), apduResp.SafecardSalt)
@@ -114,7 +112,7 @@ func NewAPDUPairStep2(cryptogram []byte) *apdu.Command {
 }
 
 func ParsePairStep2Response(resp []byte) (SafecardRAPDUStep2, error) {
-	log.Infof("raw pairStep2 resp: % X", resp)
+	log.Debugf("raw pairStep2 resp: % X", resp)
 	correctLength := 33
 	if len(resp) != correctLength {
 		log.Errorf("resp was length(%v). should have been length %v", len(resp), correctLength)

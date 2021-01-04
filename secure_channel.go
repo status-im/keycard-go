@@ -71,6 +71,7 @@ func (sc *SecureChannel) RawPublicKey() []byte {
 	return ethcrypto.FromECDSAPub(sc.publicKey)
 }
 
+//AES-GCM Symmetric encryption
 func (sc *SecureChannel) Send(cmd *apdu.Command) (*apdu.Response, error) {
 	if sc.open {
 		encData, err := crypto.EncryptData(cmd.Data, sc.encKey, sc.iv)
