@@ -4,10 +4,8 @@ import (
 	"github.com/GridPlus/keycard-go/apdu"
 	"github.com/GridPlus/keycard-go/globalplatform"
 	"github.com/GridPlus/keycard-go/hexutils"
-	"github.com/ethereum/go-ethereum/log"
+	log "github.com/sirupsen/logrus"
 )
-
-var logger = log.New("package", "io")
 
 // Transmitter defines an interface with one method to transmit raw commands and receive raw responses.
 type Transmitter interface {
@@ -33,12 +31,12 @@ func (c *NormalChannel) Send(cmd *apdu.Command) (*apdu.Response, error) {
 		return nil, err
 	}
 
-	logger.Debug("apdu command", "hex", hexutils.BytesToHexWithSpaces(rawCmd))
+	log.Debug("apdu command hex: ", hexutils.BytesToHexWithSpaces(rawCmd))
 	rawResp, err := c.t.Transmit(rawCmd)
 	if err != nil {
 		return nil, err
 	}
-	logger.Debug("apdu response", "hex", hexutils.BytesToHexWithSpaces(rawResp))
+	log.Debug("apdu response hex: ", hexutils.BytesToHexWithSpaces(rawResp))
 
 	resp, err := apdu.ParseResponse(rawResp)
 	if err != nil {

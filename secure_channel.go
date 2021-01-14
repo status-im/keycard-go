@@ -11,6 +11,7 @@ import (
 	"github.com/GridPlus/keycard-go/hexutils"
 	"github.com/GridPlus/keycard-go/types"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
+	log "github.com/sirupsen/logrus"
 )
 
 var ErrInvalidResponseMAC = errors.New("invalid response MAC")
@@ -72,6 +73,7 @@ func (sc *SecureChannel) RawPublicKey() []byte {
 }
 
 func (sc *SecureChannel) Send(cmd *apdu.Command) (*apdu.Response, error) {
+	log.Debug("about to send encrypted command: %+v", cmd)
 	if sc.open {
 		encData, err := crypto.EncryptData(cmd.Data, sc.encKey, sc.iv)
 		if err != nil {
