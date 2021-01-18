@@ -52,7 +52,7 @@ func (cs *CommandSet) Select() error {
 		return err
 	}
 
-	log.Debug("select response: ", hex.Dump(resp.Data))
+	log.Debug("select response:\n", hex.Dump(resp.Data))
 	instanceUID, cardPubKey, err := gridplus.ParseSelectResponse(resp.Data)
 	if err != nil {
 		return err

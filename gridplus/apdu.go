@@ -17,6 +17,8 @@ var (
 	TLV_TYPE_CUSTOM                         uint8 = 0x80
 )
 
+var ErrCardUninitialized = errors.New("card uninitialized")
+
 type SafecardRAPDUStep1 struct {
 	SafecardSalt []byte
 	SafecardCert SafecardCert
@@ -53,11 +55,11 @@ func ParseSelectResponse(resp []byte) (instanceUID []byte, cardPubKey []byte, er
 			cardPubKey = resp[24:89]
 		} else {
 			instanceUID = resp[5:21]
-			cardPubKey = resp[23:88]
+			cardPubKey = resp[22:87]
 		}
 	case 0x80:
 		log.Error("card wallet uninitialized")
-		return nil, nil, errors.New("card wallet uninitialized")
+		return nil, nil, ErrCardUninitialized
 	}
 
 	return instanceUID, cardPubKey, nil
