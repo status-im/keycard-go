@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"errors"
+	"fmt"
 
 	"github.com/status-im/keycard-go/apdu"
 	"github.com/status-im/keycard-go/crypto"
@@ -13,6 +14,14 @@ import (
 )
 
 var ErrNoAvailablePairingSlots = errors.New("no available pairing slots")
+
+type WrongPINError struct {
+	remainingAttempts int
+}
+
+func (e *WrongPINError) Error() string {
+	return fmt.Sprintf("wrong pin. remaining attempts: %d", e.remainingAttempts)
+}
 
 type CommandSet struct {
 	c               types.Channel
@@ -177,8 +186,17 @@ func (cs *CommandSet) GetStatusKeyPath() (*types.ApplicationStatus, error) {
 func (cs *CommandSet) VerifyPIN(pin string) error {
 	cmd := NewCommandVerifyPIN(pin)
 	resp, err := cs.sc.Send(cmd)
+	if err = cs.checkOK(resp, err); err != nil {
+		if resp.Sw&0x63C0 == 0x63C0 {
+			remainingAttempts := resp.Sw & 0x000F
+			return &WrongPINError{
+				remainingAttempts: int(remainingAttempts),
+			}
+		}
+		return err
+	}
 
-	return cs.checkOK(resp, err)
+	return nil
 }
 
 func (cs *CommandSet) ChangePIN(pin string) error {
