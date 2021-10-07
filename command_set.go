@@ -16,11 +16,11 @@ import (
 var ErrNoAvailablePairingSlots = errors.New("no available pairing slots")
 
 type WrongPINError struct {
-	remainingAttempts int
+	RemainingAttempts int
 }
 
 func (e *WrongPINError) Error() string {
-	return fmt.Sprintf("wrong pin. remaining attempts: %d", e.remainingAttempts)
+	return fmt.Sprintf("wrong pin. remaining attempts: %d", e.RemainingAttempts)
 }
 
 type CommandSet struct {
@@ -190,7 +190,7 @@ func (cs *CommandSet) VerifyPIN(pin string) error {
 		if resp.Sw&0x63C0 == 0x63C0 {
 			remainingAttempts := resp.Sw & 0x000F
 			return &WrongPINError{
-				remainingAttempts: int(remainingAttempts),
+				RemainingAttempts: int(remainingAttempts),
 			}
 		}
 		return err
