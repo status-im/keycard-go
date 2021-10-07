@@ -18,15 +18,27 @@ func ParseExportKeyResponse(data []byte) ([]byte, []byte, error) {
 		return nil, nil, err
 	}
 
-	privKey, err := apdu.FindTag(tpl, apdu.Tag{0x81})
-	if err != nil {
-		return nil, nil, err
+	pubKey := tryFindTag(tpl, apdu.Tag{0x80})
+	privKey := tryFindTag(tpl, apdu.Tag{0x81})
+
+	if len(pubKey) == 0 && len(privKey) > 0 {
+		ecdsaKey, err := ethcrypto.HexToECDSA(fmt.Sprintf("%x", privKey))
+		if err != nil {
+			return nil, nil, err
+		}
+
+		pubKey = ethcrypto.FromECDSAPub(&ecdsaKey.PublicKey)
 	}
 
-	ecdsaKey, err := ethcrypto.HexToECDSA(fmt.Sprintf("%x", privKey))
+	return privKey, pubKey, nil
+}
+
+func tryFindTag(tpl []byte, tags ...apdu.Tag) []byte {
+	data, err := apdu.FindTag(tpl, tags...)
 	if err != nil {
-		return nil, nil, err
+		fmt.Printf("returning nil %+v\n", tags)
+		return nil
 	}
 
-	return privKey, ethcrypto.FromECDSAPub(&ecdsaKey.PublicKey), nil
+	return data
 }
