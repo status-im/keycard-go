@@ -26,4 +26,4 @@ If you only need a tool to initialize your card, check out [keycard-cli](https:/
 - [ ] DUPLICATE KEY
 - [x] SIGN
 - [ ] SET PINLESS PATH
-- [ ] EXPORT KEY
+- [x] EXPORT KEY
