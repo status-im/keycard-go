@@ -1,8 +1,10 @@
 package keycard
 
 import (
+	"bytes"
 	"crypto/rand"
 	"crypto/sha256"
+	"encoding/binary"
 	"errors"
 	"fmt"
 
@@ -14,6 +16,7 @@ import (
 )
 
 var ErrNoAvailablePairingSlots = errors.New("no available pairing slots")
+var ErrBadChecksumSize = errors.New("bad checksum size")
 
 type WrongPINError struct {
 	RemainingAttempts int
@@ -229,6 +232,32 @@ func (cs *CommandSet) GenerateKey() ([]byte, error) {
 	}
 
 	return resp.Data, nil
+}
+
+func (cs *CommandSet) GenerateMnemonic(checksumSize int) ([]int, error) {
+	if checksumSize < 4 || checksumSize > 8 {
+		return nil, ErrBadChecksumSize
+	}
+
+	cmd := NewCommandGenerateMnemonic(byte(checksumSize))
+	resp, err := cs.sc.Send(cmd)
+	if err = cs.checkOK(resp, err); err != nil {
+		return nil, err
+	}
+
+	buf := bytes.NewBuffer(resp.Data)
+	indexes := make([]int, 0)
+	for {
+		var index int16
+		err := binary.Read(buf, binary.BigEndian, &index)
+		if err != nil {
+			break
+		}
+
+		indexes = append(indexes, int(index))
+	}
+
+	return indexes, nil
 }
 
 func (cs *CommandSet) RemoveKey() error {

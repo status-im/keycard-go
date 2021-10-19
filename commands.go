@@ -26,6 +26,7 @@ const (
 	InsSign                 = 0xC0
 	InsSetPinlessPath       = 0xC1
 	InsLoadKey              = 0xD0
+	InsGenerateMnemonic     = 0xD2
 
 	P1PairingFirstStep              = 0x00
 	P1PairingFinalStep              = 0x01
@@ -126,6 +127,16 @@ func NewCommandGenerateKey() *apdu.Command {
 		globalplatform.ClaGp,
 		InsGenerateKey,
 		0,
+		0,
+		[]byte{},
+	)
+}
+
+func NewCommandGenerateMnemonic(checksumSize byte) *apdu.Command {
+	return apdu.NewCommand(
+		globalplatform.ClaGp,
+		InsGenerateMnemonic,
+		checksumSize,
 		0,
 		[]byte{},
 	)
