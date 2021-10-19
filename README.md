@@ -19,7 +19,7 @@ If you only need a tool to initialize your card, check out [keycard-cli](https:/
 - [ ] UNBLOCK PIN
 - [ ] LOAD KEY
 - [x] DERIVE KEY
-- [ ] GENERATE MNEMONIC
+- [x] GENERATE MNEMONIC
 - [x] REMOVE KEY
 - [x] GENERATE KEY
 - [x] INIT
