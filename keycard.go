@@ -1,5 +1,7 @@
 package keycard
 
-import "github.com/status-im/go-ethereum/log"
+import (
+	"github.com/status-im/go-ethereum/log"
+)
 
-var logger = log.New("package", "keycard")
+var logger = log.New("package", "keycard-go")
