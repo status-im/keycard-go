@@ -1,5 +1,5 @@
 package globalplatform
 
-import "github.com/status-im/go-ethereum/log"
+import "github.com/ethereum/go-ethereum/log"
 
 var logger = log.New("package", "keycard-go/globalplatform")

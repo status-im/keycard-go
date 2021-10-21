@@ -3,7 +3,7 @@ package crypto
 import (
 	"testing"
 
-	"github.com/status-im/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/status-im/keycard-go/hexutils"
 	"github.com/stretchr/testify/assert"
 )
