@@ -10,7 +10,7 @@ import (
 	"crypto/sha512"
 	"errors"
 
-	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/status-im/go-ethereum/crypto"
 	"golang.org/x/crypto/pbkdf2"
 	"golang.org/x/text/unicode/norm"
 )

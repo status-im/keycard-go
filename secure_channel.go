@@ -5,7 +5,7 @@ import (
 	"crypto/ecdsa"
 	"errors"
 
-	ethcrypto "github.com/ethereum/go-ethereum/crypto"
+	ethcrypto "github.com/status-im/go-ethereum/crypto"
 	"github.com/status-im/keycard-go/apdu"
 	"github.com/status-im/keycard-go/crypto"
 	"github.com/status-im/keycard-go/globalplatform"

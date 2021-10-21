@@ -1,7 +1,7 @@
 package io
 
 import (
-	"github.com/ethereum/go-ethereum/log"
+	"github.com/status-im/go-ethereum/log"
 	"github.com/status-im/keycard-go/apdu"
 	"github.com/status-im/keycard-go/globalplatform"
 	"github.com/status-im/keycard-go/hexutils"

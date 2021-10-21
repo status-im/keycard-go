@@ -3,7 +3,7 @@ package types
 import (
 	"fmt"
 
-	ethcrypto "github.com/ethereum/go-ethereum/crypto"
+	ethcrypto "github.com/status-im/go-ethereum/crypto"
 	"github.com/status-im/keycard-go/apdu"
 )
 
