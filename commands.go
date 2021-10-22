@@ -21,6 +21,7 @@ const (
 	InsRemoveKey            = 0xD3
 	InsVerifyPIN            = 0x20
 	InsChangePIN            = 0x21
+	InsUnblockPIN           = 0x22
 	InsDeriveKey            = 0xD1
 	InsExportKey            = 0xC2
 	InsSign                 = 0xC0
@@ -169,6 +170,16 @@ func NewCommandChangePIN(pin string) *apdu.Command {
 		P1ChangePinPIN,
 		0,
 		[]byte(pin),
+	)
+}
+
+func NewCommandUnblockPIN(puk string, newPIN string) *apdu.Command {
+	return apdu.NewCommand(
+		globalplatform.ClaGp,
+		InsUnblockPIN,
+		0,
+		0,
+		[]byte(puk+newPIN),
 	)
 }
 

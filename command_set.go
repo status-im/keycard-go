@@ -26,6 +26,14 @@ func (e *WrongPINError) Error() string {
 	return fmt.Sprintf("wrong pin. remaining attempts: %d", e.RemainingAttempts)
 }
 
+type WrongPUKError struct {
+	RemainingAttempts int
+}
+
+func (e *WrongPUKError) Error() string {
+	return fmt.Sprintf("wrong puk. remaining attempts: %d", e.RemainingAttempts)
+}
+
 type CommandSet struct {
 	c               types.Channel
 	sc              *SecureChannel
@@ -205,8 +213,23 @@ func (cs *CommandSet) VerifyPIN(pin string) error {
 func (cs *CommandSet) ChangePIN(pin string) error {
 	cmd := NewCommandChangePIN(pin)
 	resp, err := cs.sc.Send(cmd)
-
 	return cs.checkOK(resp, err)
+}
+
+func (cs *CommandSet) UnblockPIN(puk string, newPIN string) error {
+	cmd := NewCommandUnblockPIN(puk, newPIN)
+	resp, err := cs.sc.Send(cmd)
+	if err = cs.checkOK(resp, err); err != nil {
+		if resp.Sw&0x63C0 == 0x63C0 {
+			remainingAttempts := resp.Sw & 0x000F
+			return &WrongPUKError{
+				RemainingAttempts: int(remainingAttempts),
+			}
+		}
+		return err
+	}
+
+	return nil
 }
 
 func (cs *CommandSet) ChangePUK(puk string) error {
