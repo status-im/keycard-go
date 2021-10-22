@@ -108,7 +108,7 @@ func (cs *CommandSet) Pair(pairingPass string) error {
 
 	cmd := NewCommandPairFirstStep(challenge)
 	resp, err := cs.c.Send(cmd)
-	if resp.Sw == SwNoAvailablePairingSlots {
+	if resp != nil && resp.Sw == SwNoAvailablePairingSlots {
 		return ErrNoAvailablePairingSlots
 	}
 
