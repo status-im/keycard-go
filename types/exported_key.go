@@ -36,7 +36,6 @@ func ParseExportKeyResponse(data []byte) ([]byte, []byte, error) {
 func tryFindTag(tpl []byte, tags ...apdu.Tag) []byte {
 	data, err := apdu.FindTag(tpl, tags...)
 	if err != nil {
-		fmt.Printf("returning nil %+v\n", tags)
 		return nil
 	}
 
