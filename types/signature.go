@@ -38,6 +38,10 @@ func ParseSignature(message, resp []byte) (*Signature, error) {
 		return nil, err
 	}
 
+	if len(s) > 32 {
+		s = s[len(s)-32:]
+	}
+
 	v, err := calculateV(message, pubKey, r, s)
 	if err != nil {
 		return nil, err
