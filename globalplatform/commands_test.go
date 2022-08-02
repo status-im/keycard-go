@@ -56,7 +56,7 @@ func TestNewCommandExternalAuthenticate(t *testing.T) {
 
 func TestNewCommandDelete(t *testing.T) {
 	aid := hexutils.HexToBytes("0102030405")
-	cmd := NewCommandDelete(aid)
+	cmd := NewCommandDelete(aid, P2DeleteObject)
 	assert.Equal(t, uint8(0x80), cmd.Cla)
 	assert.Equal(t, uint8(0xE4), cmd.Ins)
 	assert.Equal(t, uint8(0x00), cmd.P1)

@@ -26,8 +26,10 @@ const (
 	InsExportKey            = 0xC2
 	InsSign                 = 0xC0
 	InsSetPinlessPath       = 0xC1
+	InsGetData              = 0xCA
 	InsLoadKey              = 0xD0
 	InsGenerateMnemonic     = 0xD2
+	InsStoreData            = 0xE2
 
 	P1PairingFirstStep              = 0x00
 	P1PairingFinalStep              = 0x01
@@ -43,6 +45,9 @@ const (
 	P1SignDerive                    = 0x01
 	P1SignDeriveAndMakeCurrent      = 0x02
 	P1SignPinless                   = 0x03
+	P1StoreDataPublic               = 0x00
+	P1StoreDataNDEF                 = 0x01
+	P1StoreDataCash                 = 0x02
 	P1ExportKeyCurrent              = 0x00
 	P1ExportKeyDerive               = 0x01
 	P1ExportKeyDeriveAndMakeCurrent = 0x02
@@ -331,6 +336,26 @@ func NewCommandSign(data []byte, p1 uint8, pathStr string) (*apdu.Command, error
 		0,
 		data,
 	), nil
+}
+
+func NewCommandGetData(typ uint8) *apdu.Command {
+	return apdu.NewCommand(
+		globalplatform.ClaGp,
+		InsGetData,
+		typ,
+		0,
+		[]byte{},
+	)
+}
+
+func NewCommandStoreData(typ uint8, data []byte) *apdu.Command {
+	return apdu.NewCommand(
+		globalplatform.ClaGp,
+		InsStoreData,
+		typ,
+		0,
+		data,
+	)
 }
 
 // Internal function. Get the type of starting point for the derivation path.

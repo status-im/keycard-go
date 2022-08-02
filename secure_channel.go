@@ -96,19 +96,29 @@ func (sc *SecureChannel) Send(cmd *apdu.Command) (*apdu.Response, error) {
 		return nil, apdu.NewErrBadResponse(resp.Sw, "unexpected sw in secure channel")
 	}
 
-	rmeta := []byte{byte(len(resp.Data)), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-	rmac := resp.Data[:len(sc.iv)]
-	rdata := resp.Data[len(sc.iv):]
-	plainData, err := crypto.DecryptData(rdata, sc.encKey, sc.iv)
-	if err = sc.updateIV(rmeta, rdata); err != nil {
-		return nil, err
-	}
+	var plainData []byte
 
-	if !bytes.Equal(sc.iv, rmac) {
-		return nil, ErrInvalidResponseMAC
-	}
+	if sc.open {
+		rmeta := []byte{byte(len(resp.Data)), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+		rmac := resp.Data[:len(sc.iv)]
+		rdata := resp.Data[len(sc.iv):]
 
-	logger.Debug("apdu response decrypted", "hex", hexutils.BytesToHexWithSpaces(plainData))
+		if plainData, err = crypto.DecryptData(rdata, sc.encKey, sc.iv); err != nil {
+			return nil, err
+		}
+
+		if err = sc.updateIV(rmeta, rdata); err != nil {
+			return nil, err
+		}
+
+		if !bytes.Equal(sc.iv, rmac) {
+			return nil, ErrInvalidResponseMAC
+		}
+
+		logger.Debug("apdu response decrypted", "hex", hexutils.BytesToHexWithSpaces(plainData))
+	} else {
+		plainData = resp.Data
+	}
 
 	return apdu.ParseResponse(plainData)
 }

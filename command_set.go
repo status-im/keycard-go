@@ -301,15 +301,15 @@ func (cs *CommandSet) DeriveKey(path string) error {
 
 func (cs *CommandSet) ExportKey(derive bool, makeCurrent bool, onlyPublic bool, path string) ([]byte, []byte, error) {
 	var p1 uint8
-	if derive == false {
+	if !derive {
 		p1 = P1ExportKeyCurrent
-	} else if makeCurrent == false {
+	} else if !makeCurrent {
 		p1 = P1ExportKeyDerive
 	} else {
 		p1 = P1ExportKeyDeriveAndMakeCurrent
 	}
 	var p2 uint8
-	if onlyPublic == true {
+	if onlyPublic {
 		p2 = P2ExportKeyPublicOnly
 	} else {
 		p2 = P2ExportKeyPrivateAndPublic
@@ -389,6 +389,22 @@ func (cs *CommandSet) LoadSeed(seed []byte) ([]byte, error) {
 	}
 
 	return resp.Data, nil
+}
+
+func (cs *CommandSet) GetData(typ uint8) ([]byte, error) {
+	cmd := NewCommandGetData(typ)
+	resp, err := cs.sc.Send(cmd)
+	if err = cs.checkOK(resp, err); err != nil {
+		return nil, err
+	}
+
+	return resp.Data, nil
+}
+
+func (cs *CommandSet) StoreData(typ uint8, data []byte) error {
+	cmd := NewCommandStoreData(typ, data)
+	resp, err := cs.sc.Send(cmd)
+	return cs.checkOK(resp, err)
 }
 
 func (cs *CommandSet) mutualAuthenticate() error {

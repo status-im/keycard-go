@@ -89,7 +89,7 @@ func TestParseLength(t *testing.T) {
 
 	for _, s := range scenarios {
 		buf := bytes.NewBuffer(s.data)
-		length, _, err := parseLength(buf)
+		length, err := ParseLength(buf)
 		if s.err == nil {
 			assert.NoError(t, err)
 			assert.Equal(t, s.expectedLength, length)
@@ -128,7 +128,7 @@ func TestParseTag(t *testing.T) {
 
 	for _, s := range scenarios {
 		buf := bytes.NewBuffer(s.rawTag)
-		tag, _, err := parseTag(buf)
+		tag, err := parseTag(buf)
 		require.Nil(t, err)
 		assert.Equal(t, s.expectedTag, tag)
 	}

@@ -50,7 +50,7 @@ func findTag(raw []byte, occurrence int, tags ...Tag) ([]byte, error) {
 	)
 
 	for {
-		tag, buf, err = parseTag(buf)
+		tag, err = parseTag(buf)
 		switch {
 		case err == io.EOF:
 			return []byte{}, &ErrTagNotFound{target}
@@ -58,7 +58,7 @@ func findTag(raw []byte, occurrence int, tags ...Tag) ([]byte, error) {
 			return nil, err
 		}
 
-		length, buf, err = parseLength(buf)
+		length, err = ParseLength(buf)
 		if err != nil {
 			return nil, err
 		}
@@ -87,59 +87,83 @@ func findTag(raw []byte, occurrence int, tags ...Tag) ([]byte, error) {
 	}
 }
 
-func parseLength(buf *bytes.Buffer) (uint32, *bytes.Buffer, error) {
+func ParseLength(buf *bytes.Buffer) (uint32, error) {
 	length, err := buf.ReadByte()
 	if err != nil {
-		return 0, nil, err
+		return 0, err
 	}
 
 	if length == 0x80 {
-		return 0, nil, ErrUnsupportedLenth80
+		return 0, ErrUnsupportedLenth80
 	}
 
 	if length > 0x80 {
 		lengthSize := length - 0x80
 		if lengthSize > 3 {
-			return 0, nil, ErrLengthTooBig
+			return 0, ErrLengthTooBig
 		}
 
 		data := make([]byte, lengthSize)
 		_, err = buf.Read(data)
 		if err != nil {
-			return 0, nil, err
+			return 0, err
 		}
 
 		num := make([]byte, 4)
 		copy(num[4-lengthSize:], data)
 
-		return binary.BigEndian.Uint32(num), buf, nil
+		return binary.BigEndian.Uint32(num), nil
 	}
 
-	return uint32(length), buf, nil
+	return uint32(length), nil
 }
 
-func parseTag(buf *bytes.Buffer) (Tag, *bytes.Buffer, error) {
+func WriteLength(buf *bytes.Buffer, length uint32) {
+	if length < 0x80 {
+		buf.WriteByte(byte(length))
+	} else if length < 0x100 {
+		buf.WriteByte(0x81)
+		buf.WriteByte(byte(length))
+	} else if length < 0x10000 {
+		buf.WriteByte(0x82)
+		buf.WriteByte(byte(length >> 8))
+		buf.WriteByte(byte(length))
+	} else if length < 0x1000000 {
+		buf.WriteByte(0x83)
+		buf.WriteByte(byte(length >> 16))
+		buf.WriteByte(byte(length >> 8))
+		buf.WriteByte(byte(length))
+	} else {
+		buf.WriteByte(0x84)
+		buf.WriteByte(byte(length >> 24))
+		buf.WriteByte(byte(length >> 16))
+		buf.WriteByte(byte(length >> 8))
+		buf.WriteByte(byte(length))
+	}
+}
+
+func parseTag(buf *bytes.Buffer) (Tag, error) {
 	tag := make(Tag, 0)
 	b, err := buf.ReadByte()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	tag = append(tag, b)
 	if b&0x1F != 0x1F {
-		return tag, buf, nil
+		return tag, nil
 	}
 
 	for {
 		b, err = buf.ReadByte()
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 
 		tag = append(tag, b)
 
 		if b&0x80 != 0x80 {
-			return tag, buf, nil
+			return tag, nil
 		}
 	}
 }

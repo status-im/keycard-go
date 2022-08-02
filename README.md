@@ -13,17 +13,17 @@ If you only need a tool to initialize your card, check out [keycard-cli](https:/
 - [x] PAIR
 - [x] UNPAIR
 - [x] GET STATUS
-- [ ] SET NDEF
+- [x] STORE DATA
+- [x] GET DATA
 - [x] VERIFY PIN
 - [x] CHANGE PIN
-- [ ] UNBLOCK PIN
-- [ ] LOAD KEY
+- [x] UNBLOCK PIN
+- [x] LOAD KEY
 - [x] DERIVE KEY
 - [x] GENERATE MNEMONIC
 - [x] REMOVE KEY
 - [x] GENERATE KEY
 - [x] INIT
-- [ ] DUPLICATE KEY
 - [x] SIGN
 - [ ] SET PINLESS PATH
 - [x] EXPORT KEY
