@@ -167,35 +167,3 @@ func (m *Metadata) Serialize() []byte {
 
 	return buf.Bytes()
 }
-
-/*
-  public byte[] toByteArray() {
-    ByteArrayOutputStream os = new ByteArrayOutputStream();
-    byte[] name = this.cardName.getBytes(Charset.forName("US-ASCII"));
-    os.write(0x20 | name.length);
-    os.write(name, 0, name.length);
-
-    if (wallets.isEmpty()) {
-      return os.toByteArray();
-    }
-
-    long start = wallets.first();
-    int len = 0;
-
-    for (Long w : wallets.tailSet(start + 1)) {
-      if (w == (start + len + 1)) {
-        len++;
-      } else {
-        TinyBERTLV.writeNum(os, (int) start);
-        TinyBERTLV.writeNum(os, len);
-        len = 0;
-        start = w;
-      }
-    }
-
-    TinyBERTLV.writeNum(os, (int) start);
-    TinyBERTLV.writeNum(os, len);
-
-    return os.toByteArray();
-  }
-*/
