@@ -21,7 +21,7 @@ var ErrInvalidCardCryptogram = errors.New("invalid card cryptogram")
 
 func GenerateECDHSharedSecret(priv *ecdsa.PrivateKey, pub *ecdsa.PublicKey) []byte {
 	x, _ := crypto.S256().ScalarMult(pub.X, pub.Y, priv.D.Bytes())
-	return x.Bytes()
+	return x.FillBytes(make([]byte, 32))
 }
 
 func VerifyCryptogram(challenge []byte, pairingPass string, cardCryptogram []byte) ([]byte, error) {
