@@ -18,7 +18,6 @@ type Command struct {
 	Data       []byte
 	le         uint8
 	requiresLe bool
-	requiresLc bool
 }
 
 // NewCommand returns a new apdu Command.
@@ -30,7 +29,6 @@ func NewCommand(cla, ins, p1, p2 uint8, data []byte) *Command {
 		P2:         p2,
 		Data:       data,
 		requiresLe: false,
-		requiresLc: false,
 	}
 }
 
@@ -38,10 +36,6 @@ func NewCommand(cla, ins, p1, p2 uint8, data []byte) *Command {
 func (c *Command) SetLe(le uint8) {
 	c.requiresLe = true
 	c.le = le
-}
-
-func (c *Command) RequiresLc() {
-	c.requiresLc = true
 }
 
 // Le returns if Le is set and its value.
@@ -69,7 +63,7 @@ func (c *Command) Serialize() ([]byte, error) {
 		return nil, err
 	}
 
-	if (len(c.Data) > 0) || c.requiresLc {
+	if len(c.Data) > 0 {
 		if err := binary.Write(buf, binary.BigEndian, uint8(len(c.Data))); err != nil {
 			return nil, err
 		}

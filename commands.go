@@ -340,18 +340,13 @@ func NewCommandSign(data []byte, p1 uint8, pathStr string) (*apdu.Command, error
 }
 
 func NewCommandGetData(typ uint8) *apdu.Command {
-	cmd := apdu.NewCommand(
+	return apdu.NewCommand(
 		globalplatform.ClaGp,
 		InsGetData,
 		typ,
 		0,
-		[]byte{},
+		[]byte{0xCA},
 	)
-
-	cmd.SetLe(0)
-	cmd.RequiresLc()
-
-	return cmd
 }
 
 func NewCommandStoreData(typ uint8, data []byte) *apdu.Command {
