@@ -246,15 +246,16 @@ func NewCommandDeriveKey(pathStr string) (*apdu.Command, error) {
 }
 
 // Export a key
-//	@param {p1}
-//		0x00: current key - returns the key that is currently loaded and ready for signing. Does not use derivation path
-//		0x01: derive - returns derived key
-//		0x02: derive and make current - returns derived key and also sets it to the current key
-//  @param {p2}
-//		0x00: return public and private key pair
-//		0x01: return only the public key
-//  @param {pathStr}
-//		Derivation path of format "m/x/x/x/x/x", e.g. "m/44'/0'/0'/0/0"
+//
+//		@param {p1}
+//			0x00: current key - returns the key that is currently loaded and ready for signing. Does not use derivation path
+//			0x01: derive - returns derived key
+//			0x02: derive and make current - returns derived key and also sets it to the current key
+//	 @param {p2}
+//			0x00: return public and private key pair
+//			0x01: return only the public key
+//	 @param {pathStr}
+//			Derivation path of format "m/x/x/x/x/x", e.g. "m/44'/0'/0'/0/0"
 func NewCommandExportKey(p1 uint8, p2 uint8, pathStr string) (*apdu.Command, error) {
 	startingPoint, path, err := derivationpath.Decode(pathStr)
 	if err != nil {
@@ -339,13 +340,16 @@ func NewCommandSign(data []byte, p1 uint8, pathStr string) (*apdu.Command, error
 }
 
 func NewCommandGetData(typ uint8) *apdu.Command {
-	return apdu.NewCommand(
+	cmd := apdu.NewCommand(
 		globalplatform.ClaGp,
 		InsGetData,
 		typ,
 		0,
 		[]byte{},
 	)
+
+	cmd.SetLe(0)
+	return cmd
 }
 
 func NewCommandStoreData(typ uint8, data []byte) *apdu.Command {
