@@ -349,6 +349,8 @@ func NewCommandGetData(typ uint8) *apdu.Command {
 	)
 
 	cmd.SetLe(0)
+	cmd.RequiresLc()
+
 	return cmd
 }
 
