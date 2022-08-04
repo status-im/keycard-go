@@ -345,7 +345,7 @@ func NewCommandGetData(typ uint8) *apdu.Command {
 		InsGetData,
 		typ,
 		0,
-		[]byte{0xCA},
+		[]byte{},
 	)
 }
 

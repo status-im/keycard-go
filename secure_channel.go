@@ -92,18 +92,18 @@ func (sc *SecureChannel) Send(cmd *apdu.Command) (*apdu.Response, error) {
 		return nil, err
 	}
 
-	if resp.Sw != globalplatform.SwOK {
-		return nil, apdu.NewErrBadResponse(resp.Sw, "unexpected sw in secure channel")
-	}
-
-	var plainData []byte
-
 	if sc.open {
+		if resp.Sw != globalplatform.SwOK {
+			return nil, apdu.NewErrBadResponse(resp.Sw, "unexpected sw in secure channel")
+		}
+
 		rmeta := []byte{byte(len(resp.Data)), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 		rmac := resp.Data[:len(sc.iv)]
 		rdata := resp.Data[len(sc.iv):]
 
-		if plainData, err = crypto.DecryptData(rdata, sc.encKey, sc.iv); err != nil {
+		plainData, err := crypto.DecryptData(rdata, sc.encKey, sc.iv)
+
+		if err != nil {
 			return nil, err
 		}
 
@@ -116,11 +116,11 @@ func (sc *SecureChannel) Send(cmd *apdu.Command) (*apdu.Response, error) {
 		}
 
 		logger.Debug("apdu response decrypted", "hex", hexutils.BytesToHexWithSpaces(plainData))
+		return apdu.ParseResponse(plainData)
 	} else {
-		plainData = resp.Data
+		return resp, nil
 	}
 
-	return apdu.ParseResponse(plainData)
 }
 
 func (sc *SecureChannel) updateIV(meta, data []byte) error {
