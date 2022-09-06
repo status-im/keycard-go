@@ -198,7 +198,7 @@ func (cs *CommandSet) VerifyPIN(pin string) error {
 	cmd := NewCommandVerifyPIN(pin)
 	resp, err := cs.sc.Send(cmd)
 	if err = cs.checkOK(resp, err); err != nil {
-		if resp.Sw&0x63C0 == 0x63C0 {
+		if resp != nil && ((resp.Sw & 0x63C0) == 0x63C0) {
 			remainingAttempts := resp.Sw & 0x000F
 			return &WrongPINError{
 				RemainingAttempts: int(remainingAttempts),
@@ -220,7 +220,7 @@ func (cs *CommandSet) UnblockPIN(puk string, newPIN string) error {
 	cmd := NewCommandUnblockPIN(puk, newPIN)
 	resp, err := cs.sc.Send(cmd)
 	if err = cs.checkOK(resp, err); err != nil {
-		if resp.Sw&0x63C0 == 0x63C0 {
+		if resp != nil && ((resp.Sw & 0x63C0) == 0x63C0) {
 			remainingAttempts := resp.Sw & 0x000F
 			return &WrongPUKError{
 				RemainingAttempts: int(remainingAttempts),
