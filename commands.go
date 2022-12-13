@@ -16,6 +16,7 @@ const (
 	InsMutuallyAuthenticate = 0x11
 	InsPair                 = 0x12
 	InsUnpair               = 0x13
+	InsIdentify             = 0x14
 	InsGetStatus            = 0xF2
 	InsGenerateKey          = 0xD4
 	InsRemoveKey            = 0xD3
@@ -53,6 +54,7 @@ const (
 	P1ExportKeyDeriveAndMakeCurrent = 0x02
 	P2ExportKeyPrivateAndPublic     = 0x00
 	P2ExportKeyPublicOnly           = 0x01
+	P2ExportKeyExtendedPublic       = 0x02
 	P1LoadKeySeed                   = 0x03
 
 	SwNoAvailablePairingSlots = 0x6A84
@@ -95,6 +97,16 @@ func NewCommandUnpair(index uint8) *apdu.Command {
 		index,
 		0,
 		[]byte{},
+	)
+}
+
+func NewCommandIdentify(challenge []byte) *apdu.Command {
+	return apdu.NewCommand(
+		globalplatform.ClaGp,
+		InsIdentify,
+		0,
+		0,
+		challenge,
 	)
 }
 
@@ -247,13 +259,14 @@ func NewCommandDeriveKey(pathStr string) (*apdu.Command, error) {
 
 // Export a key
 //
-//		@param {p1}
+//	 @param {p1}
 //			0x00: current key - returns the key that is currently loaded and ready for signing. Does not use derivation path
 //			0x01: derive - returns derived key
 //			0x02: derive and make current - returns derived key and also sets it to the current key
 //	 @param {p2}
 //			0x00: return public and private key pair
 //			0x01: return only the public key
+//			0x02: return extended public key
 //	 @param {pathStr}
 //			Derivation path of format "m/x/x/x/x/x", e.g. "m/44'/0'/0'/0/0"
 func NewCommandExportKey(p1 uint8, p2 uint8, pathStr string) (*apdu.Command, error) {
@@ -334,7 +347,7 @@ func NewCommandSign(data []byte, p1 uint8, pathStr string) (*apdu.Command, error
 		globalplatform.ClaGp,
 		InsSign,
 		p1,
-		0,
+		1,
 		data,
 	), nil
 }
