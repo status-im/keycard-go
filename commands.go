@@ -12,6 +12,7 @@ import (
 
 const (
 	InsInit                 = 0xFE
+	InsFactoryReset         = 0xFD
 	InsOpenSecureChannel    = 0x10
 	InsMutuallyAuthenticate = 0x11
 	InsPair                 = 0x12
@@ -56,6 +57,8 @@ const (
 	P2ExportKeyPublicOnly           = 0x01
 	P2ExportKeyExtendedPublic       = 0x02
 	P1LoadKeySeed                   = 0x03
+	P1FactoryResetMagic             = 0xAA
+	P2FactoryResetMagic             = 0x55
 
 	SwNoAvailablePairingSlots = 0x6A84
 )
@@ -369,6 +372,16 @@ func NewCommandStoreData(typ uint8, data []byte) *apdu.Command {
 		typ,
 		0,
 		data,
+	)
+}
+
+func NewCommandFactoryReset() *apdu.Command {
+	return apdu.NewCommand(
+		globalplatform.ClaGp,
+		InsFactoryReset,
+		P1FactoryResetMagic,
+		P2FactoryResetMagic,
+		[]byte{},
 	)
 }
 

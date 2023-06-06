@@ -423,6 +423,12 @@ func (cs *CommandSet) StoreData(typ uint8, data []byte) error {
 	return cs.checkOK(resp, err)
 }
 
+func (cs *CommandSet) FactoryReset() error {
+	cmd := NewCommandFactoryReset()
+	resp, err := cs.sc.Send(cmd)
+	return cs.checkOK(resp, err)
+}
+
 func (cs *CommandSet) mutualAuthenticate() error {
 	data := make([]byte, 32)
 	if _, err := rand.Read(data); err != nil {
