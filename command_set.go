@@ -425,7 +425,7 @@ func (cs *CommandSet) StoreData(typ uint8, data []byte) error {
 
 func (cs *CommandSet) FactoryReset() error {
 	cmd := NewCommandFactoryReset()
-	resp, err := cs.sc.Send(cmd)
+	resp, err := cs.c.Send(cmd)
 	return cs.checkOK(resp, err)
 }
 
