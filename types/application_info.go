@@ -22,11 +22,13 @@ const (
 	CapabilityKeyManagement
 	CapabilityCredentialsManagement
 	CapabilityNDEF
+	CapabilityFactoryReset
 
 	CapabilityAll = CapabilitySecureChannel |
 		CapabilityKeyManagement |
 		CapabilityCredentialsManagement |
-		CapabilityNDEF
+		CapabilityNDEF |
+		CapabilityFactoryReset
 )
 
 type ApplicationInfo struct {
@@ -60,6 +62,10 @@ func (a *ApplicationInfo) HasCredentialsManagementCapability() bool {
 
 func (a *ApplicationInfo) HasNDEFCapability() bool {
 	return a.HasCapability(CapabilityNDEF)
+}
+
+func (a *ApplicationInfo) HasFactoryResetCapability() bool {
+	return a.HasCapability(CapabilityFactoryReset)
 }
 
 func ParseApplicationInfo(data []byte) (*ApplicationInfo, error) {

@@ -154,6 +154,22 @@ func (cs *CommandSet) Unpair(index uint8) error {
 	return cs.checkOK(resp, err)
 }
 
+func (cs *CommandSet) Identify() ([]byte, error) {
+	challenge := make([]byte, 32)
+	if _, err := rand.Read(challenge); err != nil {
+		return nil, err
+	}
+
+	cmd := NewCommandIdentify(challenge)
+	resp, err := cs.sc.Send(cmd)
+
+	if err = cs.checkOK(resp, err); err != nil {
+		return nil, err
+	}
+
+	return types.VerifyIdentity(challenge, resp.Data)
+}
+
 func (cs *CommandSet) OpenSecureChannel() error {
 	if cs.ApplicationInfo == nil {
 		return errors.New("cannot open secure channel without setting PairingInfo")
@@ -404,6 +420,12 @@ func (cs *CommandSet) GetData(typ uint8) ([]byte, error) {
 func (cs *CommandSet) StoreData(typ uint8, data []byte) error {
 	cmd := NewCommandStoreData(typ, data)
 	resp, err := cs.sc.Send(cmd)
+	return cs.checkOK(resp, err)
+}
+
+func (cs *CommandSet) FactoryReset() error {
+	cmd := NewCommandFactoryReset()
+	resp, err := cs.c.Send(cmd)
 	return cs.checkOK(resp, err)
 }
 
