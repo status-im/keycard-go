@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"errors"
 
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/status-im/keycard-go/apdu"
 )
 
@@ -23,7 +22,7 @@ func ParseCertificate(data []byte) (*Certificate, error) {
 	}
 
 	identPub := data[0:33]
-	sigData := data[33:97]
+	sigData := data[33:98]
 	msg := sha256.Sum256(identPub)
 
 	sig, err := ParseRecoverableSignature(msg[:], sigData)
@@ -58,25 +57,12 @@ func VerifyIdentity(challenge []byte, tlvData []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	sig := append(r, s...)
+	// TODO: investigate why verify signature fails but recovery works
+	_, err = calculateV(challenge, cert.identPub, r, s)
 
-	if !crypto.VerifySignature(cert.identPub, challenge, sig) {
+	if err != nil {
 		return nil, errors.New("invalid signature")
 	}
 
 	return compressPublicKey(cert.signature.pubKey), nil
-}
-
-func compressPublicKey(pubKey []byte) []byte {
-	if len(pubKey) == 33 {
-		return pubKey
-	}
-
-	if (pubKey[63] & 1) == 1 {
-		pubKey[0] = 3
-	} else {
-		pubKey[0] = 2
-	}
-
-	return pubKey[0:33]
 }

@@ -126,10 +126,28 @@ func calculateV(message, pubKey, r, s []byte) (v byte, err error) {
 			return v, err
 		}
 
+		if len(pubKey) == 33 {
+			rec = compressPublicKey(rec)
+		}
+
 		if bytes.Equal(pubKey, rec) {
 			return v, nil
 		}
 	}
 
 	return v, err
+}
+
+func compressPublicKey(pubKey []byte) []byte {
+	if len(pubKey) == 33 {
+		return pubKey
+	}
+
+	if (pubKey[63] & 1) == 1 {
+		pubKey[0] = 3
+	} else {
+		pubKey[0] = 2
+	}
+
+	return pubKey[0:33]
 }
