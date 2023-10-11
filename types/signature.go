@@ -143,7 +143,7 @@ func compressPublicKey(pubKey []byte) []byte {
 		return pubKey
 	}
 
-	if (pubKey[63] & 1) == 1 {
+	if (pubKey[64] & 1) == 1 {
 		pubKey[0] = 3
 	} else {
 		pubKey[0] = 2
